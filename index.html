@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Relatório de Auditoria de Perdas — Nissei</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{--navy:#063B66;--blue:#0A5CA8;--yellow:#F5C400;--text:#17324D;--muted:#60758A;--red:#C62828;--green:#14804A;--line:#D9E4EC}
+*{box-sizing:border-box}body{margin:0;background:#eef2f5;color:var(--text);font-family:Arial,Helvetica,sans-serif}
+.app{max-width:1180px;margin:24px auto;padding:0 18px}.toolbar{background:#fff;border:1px solid #dbe4eb;border-radius:16px;padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;box-shadow:0 5px 20px #0000000d}
+button,.file{border:0;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer}.primary{background:var(--blue);color:#fff}.secondary{background:#edf3f8;color:var(--text)}input[type=file]{display:none}.file{background:var(--yellow);color:#17324D}.status{font-size:13px;color:var(--muted)}
+.report{width:1080px;height:1920px;background:#fff;margin:24px auto;overflow:hidden;box-shadow:0 10px 35px #0002}
+.header{height:215px;background:var(--navy);position:relative;border-bottom:30px solid var(--yellow)}
+.logo{position:absolute;left:48px;top:32px;width:205px;height:auto}.title{position:absolute;left:285px;top:74px;color:#fff;font-size:22px;font-weight:800;line-height:1;letter-spacing:.3px;white-space:nowrap}.aud{position:absolute;right:62px;top:43px;color:#fff;font-size:14px}
+.meta{height:115px;padding:30px 58px 0;position:relative}.branch{font-size:30px;font-weight:800}.small{font-size:14px;color:var(--muted);margin-top:7px}.cycle{position:absolute;right:62px;top:30px;text-align:right}.cycle b{color:var(--blue);font-size:18px}.cycle span{display:block;color:var(--muted);font-size:13px;margin-top:7px}
+.main-result{margin:0 45px;height:270px;border-radius:26px;background:#fdecec;border:2px solid #f2c5c5;position:relative;padding:28px 33px}.label{font-size:18px;color:var(--red);font-weight:800}.big{font-size:66px;line-height:1.05;font-weight:900;color:var(--red);margin-top:14px}.result-meta{font-size:20px;margin-top:18px}.pill{position:absolute;right:40px;top:35px;background:var(--red);color:#fff;border-radius:40px;padding:20px 30px;font-weight:800}.prev{position:absolute;right:40px;top:138px;color:var(--muted);font-size:13px}.prev strong{display:block;color:var(--text);font-size:26px;margin-top:5px}.prev em{display:block;color:var(--red);font-style:normal;font-size:16px;margin-top:12px}
+.section-title{font-size:18px;font-weight:800;margin:30px 58px 15px}.cards{display:flex;gap:0;margin:0 45px}.card{width:33.333%;height:140px;border:2px solid #d9e4ec;background:#fafbfc;padding:20px;border-radius:18px;margin-right:15px}.card:last-child{margin-right:0}.card .ct{font-size:11px;color:var(--muted);font-weight:800}.card .cv{font-size:26px;font-weight:900;margin-top:12px}.card .cs{font-size:12px;color:var(--muted);margin-top:9px}.red{color:var(--red)}.green{color:var(--green)}.navy{color:var(--navy)}
+.cards2{display:flex;justify-content:center;gap:15px;margin:15px 45px 0}.cards2 .card{width:330px;height:115px}
+.compare{margin:0 45px;border:2px solid var(--line);border-radius:20px;padding:25px 20px 15px}.grid{display:grid;grid-template-columns:2fr 1.2fr 1.2fr 1.2fr;align-items:center}.grid.head{font-size:11px;color:var(--muted);font-weight:800}.row{font-size:14px;padding:15px 0;border-top:1px solid var(--line)}.row .bad{color:var(--red);font-weight:800}.read{font-size:13px;color:var(--red);margin-top:12px}
+.sectors{margin:0 45px;border:2px solid var(--line);border-radius:20px;padding:18px 20px}.srow{display:grid;grid-template-columns:330px 1fr 110px;gap:15px;align-items:center;height:31px}.bar{height:12px;background:#e8eef3;border-radius:8px;overflow:hidden}.fill{height:100%;background:var(--blue);border-radius:8px}
+.rank-wrap{display:flex;gap:10px;margin:0 45px}.rank{width:50%;border-radius:18px;padding:12px 14px;border:1px solid}.rank.f{background:#fdecec;border-color:#f2c5c5}.rank.s{background:#edf8f2;border-color:#b9dec9}.rank h3{margin:0 0 9px;font-size:18px}.item{display:grid;grid-template-columns:25px 55px 1fr 90px;gap:5px;align-items:center;height:25px;font-size:10px}.item .v{text-align:right;font-weight:800}.f .v{color:var(--red)}.s .v{color:var(--green)}
+
+.email-modal{display:none;position:fixed;inset:0;background:#0008;z-index:9999;align-items:center;justify-content:center;padding:20px}.email-modal.open{display:flex}.email-box{width:min(560px,100%);background:#fff;border-radius:20px;padding:24px;box-shadow:0 20px 70px #0006}.email-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.email-head h2{margin:0;color:var(--navy);font-size:22px}.email-head p{margin:7px 0 18px;color:var(--muted);font-size:13px}.close-email{background:transparent;font-size:28px;padding:0 8px;color:var(--muted)}.email-box label{display:block;font-size:12px;font-weight:800;color:var(--text);margin-top:12px}.email-box input,.email-box textarea{width:100%;margin-top:6px;border:1px solid #cfdbe4;border-radius:10px;padding:11px 12px;font:inherit;color:var(--text);outline:none}.email-box input:focus,.email-box textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #0a5ca81a}.email-note{background:#f4f8fb;border-radius:10px;padding:10px 12px;margin-top:14px;font-size:12px;color:var(--muted)}.email-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.email-status{font-size:12px;margin-top:12px;color:var(--muted);min-height:16px}.email-status.ok{color:var(--green);font-weight:700}.email-status.err{color:var(--red);font-weight:700}
+@media(max-width:1120px){.report{transform-origin:top left;transform:scale(calc((100vw - 36px)/1080));margin-bottom:calc(-1920px + ((100vw - 36px)/1080)*1920 + 24px)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="toolbar">
+    <label class="file">📊 Selecionar planilha <input id="file" type="file" accept=".xlsx,.xls,.ods"></label>
+    <button class="primary" id="export">Exportar JPEG</button><button class="secondary" id="share">📱 Compartilhar JPEG</button><button class="secondary" id="emailBtn">📧 Enviar por e-mail</button>
+    <button class="secondary" id="reset">Carregar exemplo</button>
+    <span class="status" id="status">Carregue a planilha da filial para gerar o relatório.</span>
+  </div>
+  <div id="emailModal" class="email-modal" aria-hidden="true">
+    <div class="email-box" role="dialog" aria-modal="true" aria-labelledby="emailTitle">
+      <div class="email-head"><div><h2 id="emailTitle">Enviar relatório por e-mail</h2><p>O JPEG será gerado automaticamente e enviado pelo seu Gmail corporativo.</p></div><button type="button" class="close-email" id="closeEmail">×</button></div>
+      <label>Destinatário(s)<input id="emailTo" type="text" placeholder="exemplo@empresa.com.br, outro@empresa.com.br" autocomplete="email"></label>
+      <label>Assunto<input id="emailSubject" type="text"></label>
+      <label>Mensagem<textarea id="emailMessage" rows="5"></textarea></label>
+      <div class="email-note">🔒 A planilha não é enviada. Apenas o relatório JPEG é anexado. O envio usa sua própria conta Google.</div>
+      <div class="email-actions"><button type="button" class="secondary" id="cancelEmail">Cancelar</button><button type="button" class="primary" id="sendEmail">📧 Enviar relatório</button></div>
+      <div class="email-status" id="emailStatus"></div>
+    </div>
+  </div>
+  <div id="report" class="report"></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const brl=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
+const pct=v=>(Number(v)*100).toFixed(2).replace('.',',')+'%';
+const pp=v=>((Number(v)*100>=0?'+':'')+(Number(v)*100).toFixed(2).replace('.',',')+'%');
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function norm(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
+function num(v){if(typeof v==='number')return v; let s=String(v??'').replace(/[R$\s]/g,'').replace(/\./g,'').replace(',','.'); return Number(s)||0}
+let currentReport=null;
+function findCol(headers,names){for(const n of names){const i=headers.findIndex(h=>norm(h)===norm(n));if(i>=0)return headers[i]}return null}
+function rowsFrom(ws){return XLSX.utils.sheet_to_json(ws,{defval:null})}
+function parseWorkbook(wb){
+  const names=wb.SheetNames;
+  const painelName=names.find(n=>norm(n)==='painel')||names.find(n=>norm(n).includes('painel'));
+  const baseName=names.find(n=>norm(n)==='base_dados')||names.find(n=>norm(n).includes('base_dados')&&!norm(n).includes('anterior'));
+  if(!painelName||!baseName) throw new Error('A planilha precisa ter as abas PAINEL e BASE_DADOS.');
+  const raw=XLSX.utils.sheet_to_json(wb.Sheets[painelName],{header:1,defval:null});
+  // A estrutura do PAINEL usada pelo arquivo de referência:
+  const get=(r,c)=>raw[r]?.[c];
+  function findLabeledValue(raw, labels){
+    const wanted=labels.map(norm);
+    for(let r=0;r<raw.length;r++){
+      for(let c=0;c<raw[r].length;c++){
+        const cell=norm(raw[r][c]);
+        if(wanted.includes(cell)){
+          for(let dc=1;dc<=3;dc++){
+            const v=raw[r]?.[c+dc];
+            if(v!==null && v!==undefined && String(v).trim()!=='') return v;
+          }
+          if(r+1<raw.length){
+            const v=raw[r+1]?.[c];
+            if(v!==null && v!==undefined && String(v).trim()!=='') return v;
+          }
+        }
+      }
+    }
+    return '';
+}
+const matriculaGestor = findLabeledValue(raw,['matrícula gestor','matricula gestor','matrícula do gestor','matricula do gestor']);
+const auditor = findLabeledValue(raw,['auditor','nome auditor','auditor responsável','auditor responsavel']);
+const data={
+    filial:String(get(2,1)||''),
+    gestor:String(get(3,1)||''),
+    matriculaGestor:String(matriculaGestor||''),
+    auditor:String(auditor||''),
+    data:String(get(4,1)||''),
+    cicloAnt:String(get(5,5)||''),
+    cicloAtual:String(get(13,5)||''),
+    fatAnt:num(get(28,1)), fatAtual:num(get(28,2)),
+    indAnt:num(get(29,1)), indAtual:num(get(29,2)),
+    resAnt:num(get(30,1))/100, resAtual:num(get(30,2))/100,
+    meta:num(get(32,1))
+  };
+  data.falta=0;data.sobra=0;
+  // BASE_DADOS: usa os nomes das colunas, sem depender da posição.
+  const base=rowsFrom(wb.Sheets[baseName]);
+  if(!base.length)throw new Error('BASE_DADOS está vazia.');
+  const headers=Object.keys(base[0]);
+  const cProd=findCol(headers,['Produto','Código','Codigo']);
+  const cDesc=findCol(headers,['Descrição Prod','Descrição','Descricao']);
+  const cSec=findCol(headers,['Seção','Secao']);
+  const cF=findCol(headers,['Total Falta']);
+  const cS=findCol(headers,['Total Sobra']);
+  if(!cProd||!cDesc||!cF||!cS)throw new Error('Não encontrei as colunas Produto, Descrição Prod, Total Falta e Total Sobra na BASE_DADOS.');
+  base.forEach(r=>{data.falta+=num(r[cF]);data.sobra+=num(r[cS])});
+  data.geral=data.falta+data.sobra;data.pp=data.falta-data.sobra;
+  data.faltas=base.filter(r=>num(r[cF])>0).sort((a,b)=>num(b[cF])-num(a[cF])).slice(0,10).map(r=>[r[cProd],r[cDesc],r[cSec],num(r[cF])]);
+  data.sobras=base.filter(r=>num(r[cS])>0).sort((a,b)=>num(b[cS])-num(a[cS])).slice(0,10).map(r=>[r[cProd],r[cDesc],r[cSec],num(r[cS])]);
+  data.setores=[];
+  // Setores vêm do PAINEL; coleta as linhas da área de ranking.
+  for(let r=6;r<14;r++){const n=get(r,0),v=get(r,3);if(n!=null&&v!=null)data.setores.push([String(n),num(v)])}
+  data.setores.sort((a,b)=>b[1]-a[1]).splice(5);
+  return data;
+}
+function render(d){
+  const desvio=d.resAtual-d.meta, vr=d.resAtual-d.resAnt;
+  const vi=d.indAtual-d.indAnt;
+  const corMelhoria=v=>v<0?'var(--green)':v>0?'var(--red)':'var(--muted)';
+  const maxS=Math.max(...d.setores.map(x=>x[1]),1);
+  const list=(arr,kind)=>arr.map((x,i)=>`<div class="item"><span>${String(i+1).padStart(2,'0')}</span><span>${esc(x[0])}</span><span title="${esc(x[1])}">${esc(x[1])}</span><span class="v">${brl(x[3])}</span></div>`).join('');
+  $('report').innerHTML=`
+  <div class="header">
+    <img class="logo" src="nissei.png">
+    <div class="title">RELATÓRIO DE AUDITORIA DE PERDAS</div>
+  </div>
+  <div class="meta"><div class="branch">FILIAL ${esc(d.filial)}</div><div class="small">Gestor: ${esc(d.gestor)}${d.matriculaGestor ? " &nbsp;•&nbsp; Matrícula: "+esc(d.matriculaGestor) : ""} &nbsp;•&nbsp; Auditor: ${esc(d.auditor)}</div>
+    <div class="cycle"><b>Ciclo: ${esc(d.cicloAtual)}</b><span>Ciclo: ${esc(d.cicloAnt)}</span></div></div>
+  <div class="main-result"><div class="label">RESULTADO FINAL</div><div class="big">${pct(d.resAtual)}</div><div class="result-meta">Meta ${pct(d.meta)} &nbsp;•&nbsp; Desvio ${pp(desvio)}</div>
+    <div class="pill">${d.resAtual>d.meta?'ACIMA DA META':'DENTRO DA META'}</div>
+    <div class="prev">Ciclo anterior<strong>${pct(d.resAnt)}</strong><em style="color:${corMelhoria(vr)}">${pp(vr)} &nbsp;•&nbsp; ${vr>0?'piora':vr<0?'melhora':'sem alteração'}</em></div></div>
+  <div class="section-title">COMPOSIÇÃO DO RESULTADO</div>
+  <div class="cards">
+    <div class="card"><div class="ct">TOTAL DE FALTAS</div><div class="cv red">${brl(d.falta)}</div><div class="cs">Base de dados</div></div>
+    <div class="card"><div class="ct">TOTAL DE SOBRAS</div><div class="cv green">${brl(d.sobra)}</div><div class="cs">Base de dados</div></div>
+    <div class="card"><div class="ct">RESULTADO GERAL</div><div class="cv navy">${brl(d.geral)}</div><div class="cs">Falta + Sobra</div></div></div>
+  <div class="cards2"><div class="card"><div class="ct">INDICADOR OPERACIONAL</div><div class="cv" style="color:var(--blue)">${pct(d.indAtual)}</div><div class="cs">&nbsp;</div></div></div>
+  <div class="section-title">COMPARATIVO — CICLO ATUAL × CICLO ANTERIOR</div>
+  <div class="compare"><div class="grid head"><span>INDICADOR</span><span>ANTERIOR</span><span>ATUAL</span><span>VARIAÇÃO</span></div>
+    <div class="grid row"><span>Faturamento</span><span>${brl(d.fatAnt)}</span><span>${brl(d.fatAtual)}</span><span style="color:${d.fatAtual >= d.fatAnt ? 'var(--green)' : 'var(--red)'}">${d.fatAnt ? ((d.fatAtual/d.fatAnt-1)*100 >= 0 ? '+' : '') + ((d.fatAtual/d.fatAnt-1)*100).toFixed(1).replace('.',',') + '%' : '—'}</span></div>
+    <div class="grid row"><span>Indicador operacional</span><span>${pct(d.indAnt)}</span><span>${pct(d.indAtual)}</span><span style="color:${corMelhoria(vi)};font-weight:800">${pp(vi)}</span></div>
+    <div class="grid row"><span>Resultado final</span><span>${pct(d.resAnt)}</span><span>${pct(d.resAtual)}</span><span style="color:${corMelhoria(vr)};font-weight:800">${pp(vr)}</span></div>
+    <div class="read" style="color:${corMelhoria(vr)}">Leitura: ${pct(d.resAnt)} → ${pct(d.resAtual)} &nbsp;|&nbsp; ${pp(vr)} no resultado final.</div></div>
+  <div class="section-title">TOP 5 SETORES OFENSORES</div>
+  <div class="sectors">${d.setores.map((x,i)=>`<div class="srow"><span>${i+1}. ${esc(x[0])}</span><div class="bar"><div class="fill" style="width:${x[1]/maxS*100}%"></div></div><strong>${brl(x[1])}</strong></div>`).join('')}</div>
+  <div class="section-title">TOP 10 FALTAS × TOP 10 SOBRAS</div>
+  <div class="rank-wrap"><div class="rank f"><h3>TOP 10 FALTAS</h3>${list(d.faltas,'f')}</div><div class="rank s"><h3>TOP 10 SOBRAS</h3>${list(d.sobras,'s')}</div></div>`;
+}
+async function load(file){
+  $('status').textContent='Lendo planilha…';
+  try{
+    let wb;
+    if(file.name.toLowerCase().endsWith('.ods')){
+      const ab=await file.arrayBuffer(); wb=XLSX.read(ab,{type:'array'});
+    }else{
+      const ab=await file.arrayBuffer(); wb=XLSX.read(ab,{type:'array'});
+    }
+    const d=parseWorkbook(wb); currentReport=d; render(d); $('status').textContent='Relatório carregado. Pronto para exportar.';
+  }catch(e){console.error(e);$('status').textContent='Erro: '+e.message}
+}
+$('file').addEventListener('change',e=>{if(e.target.files[0])load(e.target.files[0])});
+
+function openEmailModal(){
+  if(!currentReport || !currentReport.filial || currentReport.filial==='—'){
+    $('status').textContent='Carregue uma planilha antes de enviar o relatório por e-mail.';
+    return;
+  }
+  const d=currentReport;
+  $('emailSubject').value=`Relatório de Auditoria de Perdas — Filial ${d.filial} — Ciclo ${d.cicloAtual}`;
+  $('emailMessage').value=`Bom dia!\n\nSegue relatório de auditoria de perdas da filial ${d.filial}, referente ao ${d.cicloAtual}, contendo os principais resultados da auditoria e a comparação com o ciclo anterior.\n\nGestor(a): ${d.gestor || '—'}\nFalta: ${brl(d.falta)}\nSobra: ${brl(d.sobra)}\nResultado Geral: ${brl(d.geral)}\nIndicador Operacional: ${pct(d.indAtual)}\nResultado Final: ${pct(d.resAtual)}\n\nNo relatório em anexo, constam também os principais produtos relacionados às faltas e sobras identificadas durante a auditoria.\n\nAtenciosamente,\n${d.auditor || 'Auditoria de Prevenção e Perdas'}\nAuditor de Prevenção e Perdas`;
+  $('emailStatus').textContent='';$('emailStatus').className='email-status';
+  $('emailModal').classList.add('open');$('emailModal').setAttribute('aria-hidden','false');
+  setTimeout(()=>$('emailTo').focus(),50);
+}
+function closeEmailModal(){ $('emailModal').classList.remove('open');$('emailModal').setAttribute('aria-hidden','true'); }
+function validEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)}
+const GOOGLE_CLIENT_ID='451187861977-m98170m0l707t4nhv1k280h375qeq2f9.apps.googleusercontent.com';
+const GMAIL_SCOPE='https://www.googleapis.com/auth/gmail.send';
+let gmailTokenClient=null;
+let gmailAccessToken=null;
+let gmailTokenPromise=null;
+
+function waitForGoogleIdentity(){
+  return new Promise((resolve,reject)=>{
+    const deadline=Date.now()+10000;
+    const check=()=>{
+      if(window.google?.accounts?.oauth2){resolve();return;}
+      if(Date.now()>deadline){reject(new Error('O serviço de autenticação do Google não carregou. Recarregue a página e tente novamente.'));return;}
+      setTimeout(check,100);
+    };
+    check();
+  });
+}
+
+async function getGmailAccessToken(){
+  await waitForGoogleIdentity();
+  if(gmailAccessToken) return gmailAccessToken;
+  if(gmailTokenPromise) return gmailTokenPromise;
+  gmailTokenPromise=new Promise((resolve,reject)=>{
+    gmailTokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:GOOGLE_CLIENT_ID,
+      scope:GMAIL_SCOPE,
+      callback:(response)=>{
+        gmailTokenPromise=null;
+        if(response?.error){reject(new Error(response.error_description||'O Google não autorizou o envio.'));return;}
+        gmailAccessToken=response.access_token;
+        resolve(gmailAccessToken);
+      },
+      error_callback:(err)=>{
+        gmailTokenPromise=null;
+        reject(new Error(err?.message||'A janela de autorização do Google foi bloqueada ou cancelada.'));
+      }
+    });
+    gmailTokenClient.requestAccessToken({prompt:''});
+  });
+  return gmailTokenPromise;
+}
+
+function toBase64UrlUtf8(text){
+  const bytes=new TextEncoder().encode(text);
+  let binary='';
+  const chunk=0x8000;
+  for(let i=0;i<bytes.length;i+=chunk) binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function encodeMimeWord(text){return '=?UTF-8?B?'+toBase64UrlUtf8(text).replace(/-/g,'+').replace(/_/g,'/')+'?=';}
+function blobToBase64(blob){
+  return blob.arrayBuffer().then(buffer=>{
+    let binary='';const bytes=new Uint8Array(buffer);const chunk=0x8000;
+    for(let i=0;i<bytes.length;i+=chunk) binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+    return btoa(binary);
+  });
+}
+function buildRawEmail({to,subject,message,filename,attachmentBase64}){
+  const boundary='----=_NisseiReport_'+Date.now().toString(36);
+  const safeFilename=filename.replace(/[^a-zA-Z0-9._-]/g,'_');
+  const headers=[
+    'To: '+to.join(', '),
+    'Subject: '+encodeMimeWord(subject),
+    'MIME-Version: 1.0',
+    'Content-Type: multipart/mixed; boundary="'+boundary+'"'
+  ].join('\r\n');
+  const body=[
+    '--'+boundary,
+    'Content-Type: text/plain; charset="UTF-8"',
+    'Content-Transfer-Encoding: base64',
+    '',
+    toBase64UrlUtf8(message).replace(/-/g,'+').replace(/_/g,'/'),
+    '--'+boundary,
+    'Content-Type: image/jpeg; name="'+safeFilename+'"',
+    'Content-Disposition: attachment; filename="'+safeFilename+'"',
+    'Content-Transfer-Encoding: base64',
+    '',
+    attachmentBase64,
+    '--'+boundary+'--'
+  ].join('\r\n');
+  return toBase64UrlUtf8(headers+'\r\n\r\n'+body);
+}
+
+async function sendEmailReport(){
+  const rawTo=$('emailTo').value.trim();
+  const to=rawTo.split(/[;,\s]+/).map(x=>x.trim()).filter(Boolean);
+  if(!to.length || to.some(x=>!validEmail(x))){$('emailStatus').textContent='Informe um ou mais e-mails válidos.';$('emailStatus').className='email-status err';return;}
+  if(!currentReport){$('emailStatus').textContent='Carregue uma planilha antes de enviar.';$('emailStatus').className='email-status err';return;}
+  const btn=$('sendEmail');btn.disabled=true;btn.textContent='Autorizando…';$('emailStatus').textContent='Abrindo a autorização segura do Google…';$('emailStatus').className='email-status';
+  try{
+    const token=await getGmailAccessToken();
+    $('emailStatus').textContent='Gerando JPEG e preparando o e-mail…';
+    const {blob}=await gerarJpeg();
+    if(blob.size>20*1024*1024) throw new Error('O JPEG ficou grande demais para o Gmail.');
+    const attachment=await blobToBase64(blob);
+    const d=currentReport;
+    const subject=$('emailSubject').value.trim();
+    const message=$('emailMessage').value;
+    const raw=buildRawEmail({to,subject,message,filename:`relatorio_auditoria_perdas_filial_${String(d.filial).replace(/[^a-z0-9_-]/gi,'_')}.jpg`,attachmentBase64:attachment});
+    $('emailStatus').textContent='Enviando pelo Gmail…';
+    const res=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{
+      method:'POST',
+      headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+      body:JSON.stringify({raw})
+    });
+    const out=await res.json().catch(()=>({}));
+    if(!res.ok){
+      gmailAccessToken=null;
+      throw new Error(out?.error?.message||'O Gmail não conseguiu enviar o relatório.');
+    }
+    $('emailStatus').textContent='Relatório enviado com sucesso pelo Gmail.';$('emailStatus').className='email-status ok';
+    $('status').textContent='Relatório enviado pelo Gmail com o JPEG anexado.';
+    setTimeout(closeEmailModal,1400);
+  }catch(e){
+    console.error(e);
+    $('emailStatus').textContent=e.message||'Não foi possível enviar o relatório.';$('emailStatus').className='email-status err';
+  }finally{btn.disabled=false;btn.textContent='📧 Enviar relatório';}
+}
+
+function renderBlank(){
+  render({
+    filial:'—',gestor:'—',matriculaGestor:'',auditor:'—',data:'—',cicloAnt:'—',cicloAtual:'—',
+    fatAnt:0,fatAtual:0,indAnt:0,indAtual:0,resAnt:0,resAtual:0,meta:0,
+    falta:0,sobra:0,geral:0,pp:0,setores:[],
+    faltas:[],sobras:[]
+  });
+  $('status').textContent='Aguardando a planilha da filial…';
+}
+
+$('reset').addEventListener('click',()=>{currentReport=null;renderBlank()});
+async function gerarJpeg(){
+  const node=$('report');
+  const canvas=await html2canvas(node,{scale:1.5,useCORS:true,backgroundColor:'#fff',width:1080,height:1920});
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.96));
+  if(!blob) throw new Error('O navegador não conseguiu criar a imagem.');
+  return {blob,canvas};
+}
+$('export').addEventListener('click',async()=>{
+  $('status').textContent='Gerando JPEG…';
+  try{
+    const {blob}=await gerarJpeg();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='relatorio_executivo_nissei.jpg'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    $('status').textContent='JPEG gerado. No iPhone, use “Compartilhar JPEG” para salvar/mandar pelo WhatsApp.';
+  }catch(e){console.error(e);$('status').textContent='Não foi possível gerar o JPEG: '+e.message}
+});
+$('share').addEventListener('click',async()=>{
+  $('status').textContent='Gerando imagem para compartilhar…';
+  try{
+    const {blob}=await gerarJpeg();
+    const file=new File([blob],'relatorio_executivo_nissei.jpg',{type:'image/jpeg'});
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Relatório de Auditoria de Perdas',text:'Relatório de Auditoria de Perdas — Nissei'});
+      $('status').textContent='Imagem enviada para o menu de compartilhamento.';
+      return;
+    }
+    // Fallback especialmente útil no iPhone: abre a imagem em uma aba própria.
+    const url=URL.createObjectURL(blob);
+    const win=window.open(url,'_blank');
+    if(!win){
+      $('status').textContent='O navegador bloqueou a nova aba. Toque novamente e permita pop-ups.';
+    }else{
+      $('status').textContent='Imagem aberta em nova aba. No iPhone, toque e segure a imagem e escolha “Salvar em Fotos”.';
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+    }
+  }catch(e){
+    if(e.name==='AbortError'){ $('status').textContent='Compartilhamento cancelado.'; return; }
+    console.error(e); $('status').textContent='Não foi possível compartilhar: '+e.message;
+  }
+});
+$('emailBtn').addEventListener('click',openEmailModal);
+$('closeEmail').addEventListener('click',closeEmailModal);
+$('cancelEmail').addEventListener('click',closeEmailModal);
+$('sendEmail').addEventListener('click',sendEmailReport);
+$('emailModal').addEventListener('click',e=>{if(e.target.id==='emailModal')closeEmailModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEmailModal()});
+renderBlank();
+</script>
+</body>
+</html>
