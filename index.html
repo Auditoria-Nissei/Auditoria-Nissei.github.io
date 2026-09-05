@@ -1,4 +1,5 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório de Auditoria de Perdas — Nissei</title><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script><script src="https://accounts.google.com/gsi/client" async defer></script><style>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório de Auditoria de Perdas — Nissei</title><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script><script src="https://accounts.google.com/gsi/client" async defer></script><style>
 :root{--navy:#063B66;--blue:#0A5CA8;--yellow:#F5C400;--text:#17324D;--muted:#60758A;--red:#C62828;--green:#14804A;--line:#D9E4EC}
 *{box-sizing:border-box}body{margin:0;background:#eef2f5;color:var(--text);font-family:Arial,Helvetica,sans-serif}
 .app{max-width:1180px;margin:24px auto;padding:0 18px}.toolbar{background:#fff;border:1px solid #dbe4eb;border-radius:16px;padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;box-shadow:0 5px 20px #0000000d}
@@ -25,6 +26,8 @@ button,.file{border:0;border-radius:10px;padding:12px 16px;font-weight:700;curso
 @media(max-width:900px){.form-grid{grid-template-columns:1fr 1fr}.import-grid{grid-template-columns:1fr}}@media(max-width:620px){.form-grid{grid-template-columns:1fr}.table-tools input{min-width:100%}}
 
 @media print{
+  .pdf-only-hide{display:none!important}
+
   @page{size:A4 portrait;margin:10mm}
   body{background:#fff}
   .app{max-width:none;margin:0;padding:0}
@@ -409,6 +412,69 @@ async function sendEmailReport(){
   }finally{btn.disabled=false;btn.textContent='📧 Enviar relatório';}
 }
 
+
+async function gerarJpeg(){
+  if(!currentReport) throw new Error('Gere o painel antes de exportar.');
+  await new Promise(r=>setTimeout(r,120));
+  if(typeof html2canvas!=='function') throw new Error('O módulo de exportação de imagem não carregou. Recarregue a página.');
+  const report=$('report');
+  if(!report) throw new Error('Painel não encontrado.');
+  const oldScroll=window.scrollY;
+  const canvas=await html2canvas(report,{backgroundColor:'#ffffff',scale:2,useCORS:true,allowTaint:false,logging:false,windowWidth:report.scrollWidth,windowHeight:report.scrollHeight});
+  window.scrollTo(0,oldScroll);
+  return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve({blob,canvas}):reject(new Error('Não foi possível gerar o JPEG.')),'image/jpeg',0.92));
+}
+async function exportJpeg(){
+  try{
+    if(!currentReport){$('status').textContent='Gere o painel antes de exportar o JPEG.';nav('p1');return;}
+    $('status').textContent='Gerando JPEG…';
+    const {blob}=await gerarJpeg();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const filial=String(currentReport.filial||'filial').replace(/[^a-z0-9_-]/gi,'_');
+    a.href=url;a.download=`Relatorio_Auditoria_Perdas_Filial_${filial}.jpg`;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    $('status').textContent='JPEG exportado com sucesso.';
+  }catch(e){console.error(e);$('status').textContent=e.message||'Não foi possível exportar o JPEG.';}
+}
+async function shareJpeg(){
+  try{
+    if(!currentReport){$('status').textContent='Gere o painel antes de compartilhar.';nav('p1');return;}
+    $('status').textContent='Preparando JPEG para compartilhamento…';
+    const {blob}=await gerarJpeg();
+    const filial=String(currentReport.filial||'filial').replace(/[^a-z0-9_-]/gi,'_');
+    const file=new File([blob],`Relatorio_Auditoria_Perdas_Filial_${filial}.jpg`,{type:'image/jpeg'});
+    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+      await navigator.share({title:'Relatório de Auditoria de Perdas',text:`Relatório de Auditoria de Perdas — Filial ${currentReport.filial}`,files:[file]});
+      $('status').textContent='JPEG compartilhado com sucesso.';
+    }else{
+      const url=URL.createObjectURL(blob);window.open(url,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(url),10000);
+      $('status').textContent='Seu navegador não permite compartilhamento direto; o JPEG foi aberto em uma nova aba.';
+    }
+  }catch(e){
+    if(e?.name==='AbortError'){$('status').textContent='Compartilhamento cancelado.';return;}
+    console.error(e);$('status').textContent=e.message||'Não foi possível compartilhar o JPEG.';
+  }
+}
+function defaultEmailContent(){
+  const d=currentReport||{};
+  const money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
+  return {
+    subject:`Relatório de Auditoria de Perdas — Filial ${d.filial||'—'} — Ciclo ${d.cicloAtual||'—'}`,
+    message:`Bom dia!\n\nSegue relatório de auditoria de perdas da filial ${d.filial||'—'}, referente ao ${d.cicloAtual||'—'}, contendo os principais resultados da auditoria e a comparação com o ciclo anterior.\n\nGestor(a): ${d.gestor||'—'}\nFalta: ${money(d.falta)}\nSobra: ${money(d.sobra)}\nResultado Geral: ${money(d.geral)}\nIndicador Operacional: ${pct(d.indAtual||0)}\nResultado Final: ${pct(d.resAtual||0)}\n\nNo relatório em anexo, constam também os principais produtos relacionados às faltas e sobras identificadas durante a auditoria.\n\nAtenciosamente,\n${d.auditor||'—'}\nAuditor de Prevenção e Perdas`
+  };
+}
+function openEmailModal(){
+  if(!currentReport){$('status').textContent='Gere o painel antes de enviar por e-mail.';nav('p1');return;}
+  const c=defaultEmailContent();
+  $('emailSubject').value=c.subject;$('emailMessage').value=c.message;$('emailStatus').textContent='';$('emailStatus').className='email-status';
+  $('emailModal').classList.add('open');$('emailModal').setAttribute('aria-hidden','false');setTimeout(()=>$('emailTo').focus(),50);
+}
+function closeEmailModal(){
+  $('emailModal').classList.remove('open');$('emailModal').setAttribute('aria-hidden','true');
+}
+
 function exportCurrentDivergenciasXlsx(){
   if(!baseAtual || !baseAtual.length){ $('status').textContent='Cole e processe a base do ciclo atual antes de exportar.'; return; }
   const rows=baseAtual.map(x=>({
@@ -429,13 +495,60 @@ function exportCurrentDivergenciasXlsx(){
   XLSX.writeFile(wb,`Divergencias_Ciclo_${ciclo}.xlsx`);
   $('status').textContent='Divergências do ciclo atual exportadas para Excel/LibreOffice.';
 }
-function exportPainelPdf(){
+async function exportPainelPdf(){
   if(!currentReport){ $('status').textContent='Gere o painel antes de exportar o PDF.'; nav('p1'); return; }
-  const oldTitle=document.title;
-  document.title=`Relatorio_Auditoria_Perdas_Filial_${String(currentReport.filial||'').replace(/[^a-z0-9_-]/gi,'_')}`;
-  // Print CSS shows all five pages and expands the long divergence tables.
-  setTimeout(()=>{window.print();setTimeout(()=>{document.title=oldTitle},1000)},50);
+  const p2=$('p2'), p3=$('p3');
+  if(!p2||!p3||typeof html2canvas==='undefined'||!window.jspdf){
+    $('status').textContent='Não foi possível preparar o PDF. Verifique sua conexão com a internet e tente novamente.';
+    return;
+  }
+  const oldPage=[p2.classList.contains('active'),p3.classList.contains('active')];
+  const oldDisplay=[p2.style.display,p3.style.display];
+  const oldStatus=$('status').textContent;
+  try{
+    $('status').textContent='Preparando PDF…';
+    p2.classList.add('active'); p3.classList.add('active');
+    p2.style.display='block'; p3.style.display='block';
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+    const pages=[p2,p3];
+    for(let i=0;i<pages.length;i++){
+      const canvas=await html2canvas(pages[i],{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,windowWidth:pages[i].scrollWidth});
+      const img=canvas.toDataURL('image/jpeg',0.92);
+      const pageW=210,pageH=297, margin=8;
+      const usableW=pageW-margin*2;
+      const ratio=usableW/canvas.width;
+      const imgH=canvas.height*ratio;
+      let y=margin;
+      let remaining=imgH;
+      let sourceY=0;
+      while(remaining>0){
+        if(i>0 || sourceY>0) pdf.addPage();
+        const sliceH=Math.min(remaining,pageH-margin*2);
+        const sourceH=sliceH/ratio;
+        const slice=document.createElement('canvas');
+        slice.width=canvas.width; slice.height=Math.max(1,Math.ceil(sourceH));
+        const ctx=slice.getContext('2d');
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,slice.width,slice.height);
+        ctx.drawImage(canvas,0,sourceY,canvas.width,sourceH,0,0,canvas.width,sourceH);
+        pdf.addImage(slice.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,usableW,sliceH);
+        remaining-=sliceH; sourceY+=sourceH;
+      }
+    }
+    const filial=String(currentReport.filial||'').replace(/[^a-z0-9_-]/gi,'_');
+    pdf.save(`Relatorio_Auditoria_Perdas_Filial_${filial||'Sem_Filial'}.pdf`);
+    $('status').textContent='PDF exportado com sucesso.';
+  }catch(err){
+    console.error(err);
+    $('status').textContent='Erro ao gerar o PDF. Tente novamente.';
+  }finally{
+    p2.style.display=oldDisplay[0]; p3.style.display=oldDisplay[1];
+    if(!oldPage[0]) p2.classList.remove('active');
+    if(!oldPage[1]) p3.classList.remove('active');
+    if(oldStatus && $('status').textContent==='') $('status').textContent=oldStatus;
+  }
 }
+
 function renderBlank(){
   render({
     filial:'—',gestor:'—',matriculaGestor:'',auditor:'—',data:'—',cicloAnt:'—',cicloAtual:'—',
@@ -448,7 +561,7 @@ function renderBlank(){
 
 $('reset').addEventListener('click',()=>{currentReport=null;renderBlank()});
 
-$('exportCurrentXlsx').addEventListener('click',exportCurrentDivergenciasXlsx);$('exportPdf').addEventListener('click',exportPainelPdf);$('emailBtn').addEventListener('click',openEmailModal);$('closeEmail').addEventListener('click',closeEmailModal);$('cancelEmail').addEventListener('click',closeEmailModal);$('sendEmail').addEventListener('click',sendEmailReport);$('emailModal').addEventListener('click',e=>{if(e.target.id==='emailModal')closeEmailModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEmailModal()});
+$('export').addEventListener('click',exportJpeg);$('share').addEventListener('click',shareJpeg);$('exportCurrentXlsx').addEventListener('click',exportCurrentDivergenciasXlsx);$('exportPdf').addEventListener('click',exportPainelPdf);$('emailBtn').addEventListener('click',openEmailModal);$('closeEmail').addEventListener('click',closeEmailModal);$('cancelEmail').addEventListener('click',closeEmailModal);$('sendEmail').addEventListener('click',sendEmailReport);$('emailModal').addEventListener('click',e=>{if(e.target.id==='emailModal')closeEmailModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEmailModal()});
 $('reset').addEventListener('click',()=>{baseAtual=[];baseAnterior=[];['filial','gestor','auditor','cicloAtual','cicloAnt','fatAtual','indAtual','fatAnt','indAnt','resAntInput'].forEach(id=>$(id).value='');$('meta').value='0,60%';$('baseAtualStatus').textContent='';$('baseAntStatus').textContent='';$('baseAtualPaste').value='';$('baseAntPaste').value='';nav('p1');$('status').textContent='Preencha os dados e importe as duas bases Procfit.';render({filial:'—',gestor:'—',matriculaGestor:'',auditor:'—',cicloAtual:'—',cicloAnt:'—',fatAtual:0,fatAnt:0,indAtual:0,indAnt:0,resAtual:0,resAnt:0,meta:.006,falta:0,sobra:0,geral:0,setores:[],faltas:[],sobras:[]});renderAnalysis();renderBaseTable('currentTable',[],'current');renderBaseTable('previousTable',[],'previous')});
 render({filial:'—',gestor:'—',matriculaGestor:'',auditor:'—',cicloAtual:'—',cicloAnt:'—',fatAtual:0,fatAnt:0,indAtual:0,indAnt:0,resAtual:0,resAnt:0,meta:.006,falta:0,sobra:0,geral:0,setores:[],faltas:[],sobras:[]});renderAnalysis();renderBaseTable('currentTable',[],'current');renderBaseTable('previousTable',[],'previous');
 </script></body></html>
