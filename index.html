@@ -1,14 +1,4 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Relatório de Auditoria de Perdas — Nissei</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<style>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório de Auditoria de Perdas — Nissei</title><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script><script src="https://accounts.google.com/gsi/client" async defer></script><style>
 :root{--navy:#063B66;--blue:#0A5CA8;--yellow:#F5C400;--text:#17324D;--muted:#60758A;--red:#C62828;--green:#14804A;--line:#D9E4EC}
 *{box-sizing:border-box}body{margin:0;background:#eef2f5;color:var(--text);font-family:Arial,Helvetica,sans-serif}
 .app{max-width:1180px;margin:24px auto;padding:0 18px}.toolbar{background:#fff;border:1px solid #dbe4eb;border-radius:16px;padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;box-shadow:0 5px 20px #0000000d}
@@ -26,103 +16,240 @@ button,.file{border:0;border-radius:10px;padding:12px 16px;font-weight:700;curso
 
 .email-modal{display:none;position:fixed;inset:0;background:#0008;z-index:9999;align-items:center;justify-content:center;padding:20px}.email-modal.open{display:flex}.email-box{width:min(560px,100%);background:#fff;border-radius:20px;padding:24px;box-shadow:0 20px 70px #0006}.email-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.email-head h2{margin:0;color:var(--navy);font-size:22px}.email-head p{margin:7px 0 18px;color:var(--muted);font-size:13px}.close-email{background:transparent;font-size:28px;padding:0 8px;color:var(--muted)}.email-box label{display:block;font-size:12px;font-weight:800;color:var(--text);margin-top:12px}.email-box input,.email-box textarea{width:100%;margin-top:6px;border:1px solid #cfdbe4;border-radius:10px;padding:11px 12px;font:inherit;color:var(--text);outline:none}.email-box input:focus,.email-box textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #0a5ca81a}.email-note{background:#f4f8fb;border-radius:10px;padding:10px 12px;margin-top:14px;font-size:12px;color:var(--muted)}.email-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.email-status{font-size:12px;margin-top:12px;color:var(--muted);min-height:16px}.email-status.ok{color:var(--green);font-weight:700}.email-status.err{color:var(--red);font-weight:700}
 @media(max-width:1120px){.report{transform-origin:top left;transform:scale(calc((100vw - 36px)/1080));margin-bottom:calc(-1920px + ((100vw - 36px)/1080)*1920 + 24px)}}
-</style>
-</head>
-<body>
-<div class="app">
-  <div class="toolbar">
-    <label class="file">📊 Selecionar planilha <input id="file" type="file" accept=".xlsx,.xls,.ods"></label>
-    <button class="primary" id="export">Exportar JPEG</button><button class="secondary" id="share">📱 Compartilhar JPEG</button><button class="secondary" id="emailBtn">📧 Enviar por e-mail</button>
-    <button class="secondary" id="reset">Carregar exemplo</button>
-    <span class="status" id="status">Carregue a planilha da filial para gerar o relatório.</span>
+
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.nav button.active{background:var(--navy);color:#fff}.page{display:none}.page.active{display:block}
+.panel,.page-wrap{background:#fff;border:1px solid #dbe4eb;border-radius:18px;padding:22px;box-shadow:0 5px 20px #0000000d;margin:20px 0}.panel h2,.page-wrap h2{margin:0;color:var(--navy);font-size:22px}.panel .sub,.page-wrap .sub{color:var(--muted);font-size:13px;margin:6px 0 18px}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.field label{display:block;font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px}.field input{width:100%;border:1px solid #cfdbe4;border-radius:10px;padding:11px 12px;font:inherit;color:var(--text);outline:none}.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #0a5ca81a}
+.import-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.drop{border:2px dashed #b8cbd8;border-radius:16px;padding:20px;text-align:center;background:#f8fbfd}.drop h3{margin:0 0 6px;color:var(--navy);font-size:16px}.drop p{margin:0 0 14px;color:var(--muted);font-size:12px}.pastebox{width:100%;min-height:170px;border:1px solid #cfdbe4;border-radius:10px;padding:11px 12px;font:12px/1.4 Consolas,monospace;color:var(--text);background:#fff;resize:vertical;outline:none}.pastebox:focus{border-color:var(--blue);box-shadow:0 0 0 3px #0a5ca81a}.import-status{font-size:12px;color:var(--green);font-weight:700;margin-top:10px;min-height:16px}.actions-row{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.table-tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}.table-tools input,.table-tools select{border:1px solid #cfdbe4;border-radius:10px;padding:10px 12px;font:inherit}.table-tools input{min-width:250px}.data-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}.data-table th{position:sticky;top:0;background:#eef4f8;color:var(--navy);text-align:left;font-size:11px;padding:10px;border-bottom:2px solid #d4e0e8;cursor:pointer;white-space:nowrap}.data-table th input,.data-table th select{width:100%;margin-top:6px;border:1px solid #cfdbe4;border-radius:7px;padding:5px 6px;font-size:10px;font-weight:400;background:#fff}.data-table td{padding:9px 10px;border-bottom:1px solid #e6edf2;vertical-align:top}.data-table tr:hover td{background:#f8fbfd}.money{text-align:right}.falta{color:var(--red);font-weight:800}.sobra{color:var(--green);font-weight:800}.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:800}.badge.new{background:#e8f7ef;color:var(--green)}.badge.rec{background:#fdecec;color:var(--red)}.badge.inv{background:#fff3df;color:#a65b00}.analysis-card{border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:16px}.analysis-head{padding:14px 16px;font-weight:900}.analysis-head.new{background:#edf8f2;color:var(--green)}.analysis-head.rec{background:#fdecec;color:var(--red)}.analysis-head.inv{background:#fff5e5;color:#a65b00}.count{float:right}.empty{padding:22px;color:var(--muted);text-align:center}.hint{font-size:12px;color:var(--muted);margin-top:8px}
+@media(max-width:900px){.form-grid{grid-template-columns:1fr 1fr}.import-grid{grid-template-columns:1fr}}@media(max-width:620px){.form-grid{grid-template-columns:1fr}.table-tools input{min-width:100%}}
+
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  body{background:#fff}
+  .app{max-width:none;margin:0;padding:0}
+  .toolbar{display:none!important}
+  .page{display:block!important;margin:0!important;padding:0!important}
+  .page:not(#p2){break-before:page}
+  .panel,.page-wrap{box-shadow:none!important;border:0!important;margin:0!important;border-radius:0!important}
+  #p2 .report{margin:0 auto!important;transform:none!important;box-shadow:none!important}
+  .data-table th{position:static}
+  #p4 .page-wrap>div[style*="max-height"],#p5 .page-wrap>div[style*="max-height"]{max-height:none!important;overflow:visible!important}
+  .email-modal{display:none!important}
+}
+
+/* ===== V17 — Página 1 visual refinada ===== */
+.entry-hero{margin:20px 0 18px;padding:24px 28px;border-radius:20px;background:linear-gradient(135deg,#063B66 0%,#0A5CA8 72%,#1474c8 100%);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:24px;box-shadow:0 12px 30px #063b6626;position:relative;overflow:hidden}
+.entry-hero:after{content:"";position:absolute;width:220px;height:220px;border:38px solid #ffffff12;border-radius:50%;right:-90px;top:-110px}
+.entry-kicker{font-size:10px;letter-spacing:1.5px;font-weight:800;opacity:.72;margin-bottom:7px}
+.entry-hero h2{margin:0;font-size:27px;letter-spacing:-.3px}
+.entry-hero p{margin:7px 0 0;color:#e3eef8;font-size:13px;max-width:700px;line-height:1.45}
+.entry-progress{position:relative;z-index:1;background:#ffffff14;border:1px solid #ffffff25;border-radius:14px;padding:12px 15px;min-width:155px}
+.entry-progress span{display:block;font-size:9px;letter-spacing:1.2px;font-weight:800;color:#f5c400;margin-bottom:4px}
+.entry-progress b{font-size:12px;color:#fff}
+.entry-panel{padding:24px!important;border-radius:20px!important;margin:14px 0!important;box-shadow:0 7px 24px #17324d0d!important}
+.panel-title-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
+.panel-title-row h2{font-size:19px!important;line-height:1.2}
+.panel-title-row .sub{margin:5px 0 0!important}
+.section-icon{width:34px;height:34px;display:grid;place-items:center;flex:0 0 34px;border-radius:10px;background:#edf4f9;color:var(--blue);font-size:11px;font-weight:900;border:1px solid #d7e5ef}
+.form-grid-ident{grid-template-columns:1.7fr 1.65fr 1.65fr;gap:16px}
+.field{position:relative}
+.field label{letter-spacing:.45px}
+.field input{height:45px;border:1.5px solid #d2dfe8!important;border-radius:12px!important;background:#fbfdff!important;transition:.18s ease}
+.field input::placeholder{color:#9aabb9}
+.field input:hover{border-color:#b9cbd8!important;background:#fff!important}
+.field input:focus{border-color:var(--blue)!important;background:#fff!important;box-shadow:0 0 0 4px #0a5ca812!important;transform:translateY(-1px)}
+.field-feature input{font-size:16px;font-weight:800;color:var(--navy)}
+.cycle-entry-grid{grid-template-columns:1fr 1fr 1fr;gap:16px}
+.field-cycle input{font-size:15px;font-weight:800}
+.current-field input{border-color:#b8d6e9!important;background:#f4f9fd!important}
+.current-field:before{content:"";position:absolute;right:11px;bottom:13px;width:7px;height:7px;border-radius:50%;background:var(--blue)}
+.previous-field input{border-color:#d6dfe6!important}
+.previous-field:before{content:"";position:absolute;right:11px;bottom:13px;width:7px;height:7px;border-radius:50%;background:#8b9baa}
+.field-meta input{font-weight:800;color:var(--green);border-color:#b9dec9!important;background:#f3faf6!important}
+.result-entry-grid{display:grid;grid-template-columns:1fr 1.35fr;gap:16px}
+.entry-card{border:1px solid #dbe5ec;border-radius:16px;padding:17px;background:#fbfcfd}
+.current-card{border-top:4px solid var(--blue)}
+.previous-card{border-top:4px solid #8b9baa}
+.entry-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.mini-tag{font-size:10px;font-weight:900;letter-spacing:1px;color:var(--navy)}
+.entry-dot{width:9px;height:9px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px #0a5ca812}
+.previous-card .entry-dot{background:#8b9baa;box-shadow:0 0 0 4px #8b9baa12}
+.entry-card .field{margin-top:11px}
+.entry-card .field:first-of-type{margin-top:0}
+.base-entry-panel{background:linear-gradient(180deg,#fff 0%,#fbfdff 100%)}
+.paste-card{border:1.5px solid #d3e1ea!important;border-radius:17px!important;padding:18px!important;text-align:left!important;background:#f8fbfd!important;transition:.18s ease}
+.paste-card:hover{border-color:#b6ccda!important;box-shadow:0 7px 18px #17324d0b}
+.current-paste{box-shadow:inset 4px 0 0 var(--blue)}
+.previous-paste{box-shadow:inset 4px 0 0 #8b9baa}
+.paste-head{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.paste-head h3{margin:0!important;font-size:16px!important}
+.paste-badge{font-size:9px;font-weight:900;letter-spacing:.7px;padding:5px 8px;border-radius:7px;background:#e7f1f8;color:var(--blue)}
+.previous-paste .paste-badge{background:#edf0f3;color:#667786}
+.paste-card p{margin:0 0 12px!important;line-height:1.45}
+.pastebox{min-height:185px!important;border:1.5px solid #cfdde6!important;border-radius:12px!important;background:#fff!important}
+.pastebox:focus{border-color:var(--blue)!important;box-shadow:0 0 0 4px #0a5ca812!important}
+.entry-footer{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:18px}
+.entry-tip{display:flex;align-items:center;gap:9px;color:var(--muted)}
+.entry-tip>span{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#eaf7f0;color:var(--green);font-weight:900}
+.entry-tip b{display:block;font-size:12px;color:var(--text)}
+.entry-tip small{display:block;font-size:11px;margin-top:2px}
+.actions-row{margin-top:0!important}
+.actions-row button{padding:12px 18px;border-radius:11px}
+@media(max-width:900px){.form-grid-ident{grid-template-columns:1fr 1fr}.result-entry-grid,.cycle-entry-grid{grid-template-columns:1fr}.entry-footer{align-items:flex-start;flex-direction:column}.entry-hero{align-items:flex-start;flex-direction:column}.entry-progress{width:100%}}
+@media(max-width:600px){.form-grid-ident{grid-template-columns:1fr}.entry-panel{padding:18px!important}.entry-hero{padding:20px}.import-grid{grid-template-columns:1fr}}
+
+/* Campos de identificação maiores para facilitar o preenchimento */
+#page1 input,
+#page1 select,
+#page1 textarea {
+  min-height: 56px !important;
+  padding: 14px 16px !important;
+  font-size: 16px !important;
+  box-sizing: border-box;
+}
+#page1 textarea {
+  min-height: 150px !important;
+  line-height: 1.5;
+}
+
+
+/* Identificação: três campos largos, com destaque para Filial */
+.form-grid-ident .field-feature input{font-size:16px!important}
+.form-grid-ident .field input{width:100%!important}
+@media(max-width:900px){.form-grid-ident{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.form-grid-ident{grid-template-columns:1fr}}
+</style></head><body>
+<div class="app"><div class="toolbar"><strong style="color:var(--navy);font-size:18px">Painel de Auditoria de Perdas</strong><span class="status" id="status">Preencha os dados e importe as duas bases Procfit.</span><div class="nav">
+<button class="secondary active" data-page="p1">1. Entrada</button><button class="secondary" data-page="p2">2. Painel</button><button class="secondary" data-page="p3">3. Análise</button><button class="secondary" data-page="p4">4. Divergências Atual</button><button class="secondary" data-page="p5">5. Divergências Anterior</button><button class="primary" id="export">Exportar JPEG</button><button class="secondary" id="exportCurrentXlsx">📊 Divergências Atual — Excel/LibreOffice</button><button class="secondary" id="exportPdf">📄 Exportar painel em PDF</button><button class="secondary" id="share">📱 Compartilhar JPEG</button><button class="secondary" id="emailBtn">📧 Enviar por e-mail</button><button class="secondary" id="reset">Limpar</button></div></div>
+<section class="page active" id="p1">
+  <div class="entry-hero">
+    <div>
+      <div class="entry-kicker">RELATÓRIO DE AUDITORIA DE PERDAS</div>
+      <h2>Preparação da auditoria</h2>
+      <p>Preencha os dados da filial e cole as duas bases do Procfit. O painel fará o tratamento automaticamente.</p>
+    </div>
+    <div class="entry-progress"><span>ETAPA 1</span><b>Dados da auditoria</b></div>
   </div>
-  <div id="emailModal" class="email-modal" aria-hidden="true">
-    <div class="email-box" role="dialog" aria-modal="true" aria-labelledby="emailTitle">
-      <div class="email-head"><div><h2 id="emailTitle">Enviar relatório por e-mail</h2><p>O JPEG será gerado automaticamente e enviado pelo seu Gmail corporativo.</p></div><button type="button" class="close-email" id="closeEmail">×</button></div>
-      <label>Destinatário(s)<input id="emailTo" type="text" placeholder="exemplo@empresa.com.br, outro@empresa.com.br" autocomplete="email"></label>
-      <label>Assunto<input id="emailSubject" type="text"></label>
-      <label>Mensagem<textarea id="emailMessage" rows="5"></textarea></label>
-      <div class="email-note">🔒 A planilha não é enviada. Apenas o relatório JPEG é anexado. O envio usa sua própria conta Google.</div>
-      <div class="email-actions"><button type="button" class="secondary" id="cancelEmail">Cancelar</button><button type="button" class="primary" id="sendEmail">📧 Enviar relatório</button></div>
-      <div class="email-status" id="emailStatus"></div>
+
+  <div class="panel entry-panel">
+    <div class="panel-title-row">
+      <div class="section-icon">01</div>
+      <div><h2>Identificação</h2><div class="sub">Informações que aparecerão no relatório.</div></div>
+    </div>
+    <div class="form-grid form-grid-ident">
+      <div class="field field-feature field-wide"><label>FILIAL — NÚMERO E NOME</label><input id="filial" placeholder="Ex.: Filial 000 — Londrina Av Higienópolis"></div>
+      <div class="field field-wide"><label>GESTOR — MATRÍCULA - NOME</label><input id="gestor" placeholder="Ex.: 12345 - João da Silva"></div>
+      <div class="field field-wide"><label>AUDITOR — MATRÍCULA - NOME</label><input id="auditor" placeholder="Ex.: 12345 - João da Silva"></div>
     </div>
   </div>
-  <div id="report" class="report"></div>
-</div>
+
+  <div class="panel entry-panel">
+    <div class="panel-title-row">
+      <div class="section-icon">02</div>
+      <div><h2>Ciclos e meta</h2><div class="sub">Defina os períodos que serão comparados.</div></div>
+    </div>
+    <div class="form-grid cycle-entry-grid">
+      <div class="field field-cycle current-field"><label>CICLO ATUAL</label><input id="cicloAtual" placeholder="Ex.: 2026-03"></div>
+      <div class="field field-cycle previous-field"><label>CICLO ANTERIOR</label><input id="cicloAnt" placeholder="Ex.: 2026-02"></div>
+      <div class="field field-meta"><label>META</label><input id="meta" value="0,60%" placeholder="0,60%"></div>
+    </div>
+  </div>
+
+  <div class="panel entry-panel">
+    <div class="panel-title-row">
+      <div class="section-icon">03</div>
+      <div><h2>Resultados dos ciclos</h2><div class="sub">Informe os valores disponíveis. O Resultado Geral e o Resultado Final atual são calculados automaticamente.</div></div>
+    </div>
+    <div class="result-entry-grid">
+      <div class="entry-card current-card">
+        <div class="entry-card-head"><span class="mini-tag">CICLO ATUAL</span><span class="entry-dot"></span></div>
+        <div class="field"><label>FATURAMENTO</label><input id="fatAtual" placeholder="R$ 0,00"></div>
+        <div class="field"><label>INDICADOR OPERACIONAL</label><input id="indAtual" placeholder="0,00%"></div>
+      </div>
+      <div class="entry-card previous-card">
+        <div class="entry-card-head"><span class="mini-tag">CICLO ANTERIOR</span><span class="entry-dot"></span></div>
+        <div class="field"><label>FATURAMENTO</label><input id="fatAnt" placeholder="R$ 0,00"></div>
+        <div class="field"><label>INDICADOR OPERACIONAL</label><input id="indAnt" placeholder="0,00%"></div>
+        <div class="field"><label>RESULTADO FINAL — JÁ FECHADO</label><input id="resAntInput" placeholder="0,00%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel entry-panel base-entry-panel">
+    <div class="panel-title-row">
+      <div class="section-icon">04</div>
+      <div><h2>Bases de divergências Procfit</h2><div class="sub">Copie a tabela no Procfit e cole diretamente nos campos abaixo. Nenhum arquivo intermediário é necessário.</div></div>
+    </div>
+    <div class="import-grid">
+      <div class="drop paste-card current-paste">
+        <div class="paste-head"><div class="paste-badge">ATUAL</div><h3>Ciclo atual</h3></div>
+        <p><strong>Ctrl+C</strong> no Procfit e depois <strong>Ctrl+V</strong> aqui.</p>
+        <textarea class="pastebox" id="baseAtualPaste" placeholder="Cole aqui a Base de Divergências do Procfit..."></textarea>
+        <div class="import-status" id="baseAtualStatus"></div>
+      </div>
+      <div class="drop paste-card previous-paste">
+        <div class="paste-head"><div class="paste-badge">ANTERIOR</div><h3>Ciclo anterior</h3></div>
+        <p>Use a base do inventário anterior para comparação.</p>
+        <textarea class="pastebox" id="baseAntPaste" placeholder="Cole aqui a Base de Divergências do ciclo anterior..."></textarea>
+        <div class="import-status" id="baseAntStatus"></div>
+      </div>
+    </div>
+    <div class="entry-footer">
+      <div class="entry-tip"><span>✓</span><div><b>Pronto para processar?</b><small>O painel identifica falta, sobra e valores automaticamente.</small></div></div>
+      <div class="actions-row"><button class="secondary" id="processBases">Processar bases</button><button class="primary" id="generate">Gerar painel</button></div>
+    </div>
+  </div>
+</section><section class="page" id="p2"><div id="report" class="report"></div></section><section class="page" id="p3"><div class="page-wrap"><h2>Análise das divergências</h2><div class="sub">Itens com valor no ciclo atual acima de R$ 50,00, classificados pela comparação com o ciclo anterior.</div><div id="analysis"></div></div></section>
+<section class="page" id="p4"><div class="page-wrap"><h2>Divergências — ciclo atual</h2><div class="sub" id="currentBaseTitle"></div><div id="currentTable"></div></div></section><section class="page" id="p5"><div class="page-wrap"><h2>Divergências — ciclo anterior</h2><div class="sub" id="previousBaseTitle"></div><div id="previousTable"></div></div></section></div>
+<div id="emailModal" class="email-modal" aria-hidden="true"><div class="email-box" role="dialog" aria-modal="true" aria-labelledby="emailTitle"><div class="email-head"><div><h2 id="emailTitle">Enviar relatório por e-mail</h2><p>O JPEG será gerado automaticamente e enviado pelo seu Gmail corporativo.</p></div><button type="button" class="close-email" id="closeEmail">×</button></div><label>Destinatário(s)<input id="emailTo" type="text" placeholder="exemplo@empresa.com.br, outro@empresa.com.br"></label><label>Assunto<input id="emailSubject" type="text"></label><label>Mensagem<textarea id="emailMessage" rows="5"></textarea></label><div class="email-note">🔒 As bases não são enviadas. Apenas o relatório JPEG é anexado.</div><div class="email-actions"><button type="button" class="secondary" id="cancelEmail">Cancelar</button><button type="button" class="primary" id="sendEmail">📧 Enviar relatório</button></div><div class="email-status" id="emailStatus"></div></div></div>
 <script>
-const $=id=>document.getElementById(id);
-const brl=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
-const pct=v=>(Number(v)*100).toFixed(2).replace('.',',')+'%';
-const pp=v=>((Number(v)*100>=0?'+':'')+(Number(v)*100).toFixed(2).replace('.',',')+'%');
-const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-function norm(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
-function num(v){if(typeof v==='number')return v; let s=String(v??'').replace(/[R$\s]/g,'').replace(/\./g,'').replace(',','.'); return Number(s)||0}
-let currentReport=null;
-function findCol(headers,names){for(const n of names){const i=headers.findIndex(h=>norm(h)===norm(n));if(i>=0)return headers[i]}return null}
-function rowsFrom(ws){return XLSX.utils.sheet_to_json(ws,{defval:null})}
-function parseWorkbook(wb){
-  const names=wb.SheetNames;
-  const painelName=names.find(n=>norm(n)==='painel')||names.find(n=>norm(n).includes('painel'));
-  const baseName=names.find(n=>norm(n)==='base_dados')||names.find(n=>norm(n).includes('base_dados')&&!norm(n).includes('anterior'));
-  if(!painelName||!baseName) throw new Error('A planilha precisa ter as abas PAINEL e BASE_DADOS.');
-  const raw=XLSX.utils.sheet_to_json(wb.Sheets[painelName],{header:1,defval:null});
-  // A estrutura do PAINEL usada pelo arquivo de referência:
-  const get=(r,c)=>raw[r]?.[c];
-  function findLabeledValue(raw, labels){
-    const wanted=labels.map(norm);
-    for(let r=0;r<raw.length;r++){
-      for(let c=0;c<raw[r].length;c++){
-        const cell=norm(raw[r][c]);
-        if(wanted.includes(cell)){
-          for(let dc=1;dc<=3;dc++){
-            const v=raw[r]?.[c+dc];
-            if(v!==null && v!==undefined && String(v).trim()!=='') return v;
-          }
-          if(r+1<raw.length){
-            const v=raw[r+1]?.[c];
-            if(v!==null && v!==undefined && String(v).trim()!=='') return v;
-          }
-        }
-      }
+const $=id=>document.getElementById(id);const brl=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);const pct=v=>(Number(v)*100).toFixed(2).replace('.',',')+'%';const pp=v=>((Number(v)*100>=0?'+':'')+(Number(v)*100).toFixed(2).replace('.',',')+'%');const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));function norm(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase()}function num(v){if(typeof v==='number')return v;let raw=String(v??'').trim();if(!raw)return 0;const money=raw.match(/R\$\s*[-+]?\d[\d.]*(?:,\d+)?/i);if(money)raw=money[0];let s=raw.replace(/R\$|\s/gi,'').replace(/[^0-9,.-]/g,'');if(!s)return 0;if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else if(s.includes(','))s=s.replace(',','.');else if(/^[-+]?\d{1,3}(?:\.\d{3})+$/.test(s))s=s.replace(/\./g,'');return Number(s)||0}function pctInput(v){let s=String(v??'').trim().replace(/%/g,'').replace(/\s/g,'');if(!s)return 0;if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(',','.');let n=Number(s)||0;return n/100;}function col(headers,names){for(const n of names){const i=headers.findIndex(h=>norm(h)===norm(n));if(i>=0)return i}return -1}function findHeaderRow(rows){for(let i=0;i<Math.min(20,rows.length);i++){const h=rows[i].map(x=>norm(x));if(h.some(x=>['produto','codigo produto','cod produto'].includes(x))&&h.some(x=>x.includes('descricao'))&&(h.some(x=>x.includes('total falta'))||h.some(x=>x.includes('diverg'))))return i}return 0}
+let currentReport=null,baseAtual=[],baseAnterior=[];
+function readProcfitText(text){
+  const clean=String(text||'').replace(/\r/g,'').trim();
+  if(!clean)throw new Error('Cole uma base do Procfit antes de processar.');
+  const rows=clean.split('\n').map(r=>r.split('\t'));
+  if(!rows.length)throw new Error('A base colada está vazia.');
+  const hi=findHeaderRow(rows); if(hi<0)throw new Error('Não foi possível localizar o cabeçalho da base Procfit.');
+  const h=rows[hi].map(x=>String(x??'').trim());
+  const ip=col(h,['Produto','Código Produto','Cod Produto','Codigo Produto']);
+  const id=col(h,['Descrição Prod','Descrição','Descricao Prod','Descricao']);
+  const is=col(h,['Seção','Secao','Setor']);
+  const ie=col(h,['Estoque Saldo','Estoque','Saldo']);
+  const ico=col(h,['Contagem','Qtde Contada','Quantidade Contada']);
+  const iq=col(h,['Diverg.','Diverg','Divergência','Divergencia','Qtd Divergencia']);
+  const ic=col(h,['Custo Unit','Custo Unitário','Custo Unitario','Custo Médio','Custo Medio','Custo']);
+  const ifa=col(h,['Total Falta','Total Faltas']);
+  const iso=col(h,['Total Sobra','Total Sobras']);
+  if(ip<0||id<0||iq<0||ic<0)throw new Error('A base precisa conter Produto, Descrição, Diverg. e Custo Unit.');
+  const out=[];
+  for(const r of rows.slice(hi+1)){
+    if(!r || r.every(c=>String(c??'').trim()===''))continue;
+    const produto=String(r[ip]??'').trim(); if(!produto)continue;
+    const descricao=String(r[id]??'').trim();
+    const secao=is>=0?String(r[is]??'').trim():'Sem seção';
+    const estoque=ie>=0?num(r[ie]):0;
+    const contagem=ico>=0?num(r[ico]):0;
+    const qtd=num(r[iq]);
+    const custo=num(r[ic]);
+    const valor=Math.abs(qtd*custo);
+    let falta=0,sobra=0;
+    if(qtd<0)falta=valor;
+    else if(qtd>0)sobra=valor;
+    if(!falta&&!sobra){
+      if(ifa>=0)falta=Math.abs(num(r[ifa]));
+      if(iso>=0)sobra=Math.abs(num(r[iso]));
     }
-    return '';
+    if(!falta&&!sobra)continue;
+    out.push({produto,descricao,secao,estoqueSaldo:estoque,contagem,qtd,custo,falta,sobra});
+  }
+  if(!out.length)throw new Error('Nenhuma divergência válida foi encontrada na base colada.');
+  return out;
 }
-const matriculaGestor = findLabeledValue(raw,['matrícula gestor','matricula gestor','matrícula do gestor','matricula do gestor']);
-const auditor = findLabeledValue(raw,['auditor','nome auditor','auditor responsável','auditor responsavel']);
-const data={
-    filial:String(get(2,1)||''),
-    gestor:String(get(3,1)||''),
-    matriculaGestor:String(matriculaGestor||''),
-    auditor:String(auditor||''),
-    data:String(get(4,1)||''),
-    cicloAnt:String(get(5,5)||''),
-    cicloAtual:String(get(13,5)||''),
-    fatAnt:num(get(28,1)), fatAtual:num(get(28,2)),
-    indAnt:num(get(29,1)), indAtual:num(get(29,2)),
-    resAnt:num(get(30,1))/100, resAtual:num(get(30,2))/100,
-    meta:num(get(32,1))
-  };
-  data.falta=0;data.sobra=0;
-  // BASE_DADOS: usa os nomes das colunas, sem depender da posição.
-  const base=rowsFrom(wb.Sheets[baseName]);
-  if(!base.length)throw new Error('BASE_DADOS está vazia.');
-  const headers=Object.keys(base[0]);
-  const cProd=findCol(headers,['Produto','Código','Codigo']);
-  const cDesc=findCol(headers,['Descrição Prod','Descrição','Descricao']);
-  const cSec=findCol(headers,['Seção','Secao']);
-  const cF=findCol(headers,['Total Falta']);
-  const cS=findCol(headers,['Total Sobra']);
-  if(!cProd||!cDesc||!cF||!cS)throw new Error('Não encontrei as colunas Produto, Descrição Prod, Total Falta e Total Sobra na BASE_DADOS.');
-  base.forEach(r=>{data.falta+=num(r[cF]);data.sobra+=num(r[cS])});
-  data.geral=data.falta+data.sobra;data.pp=data.falta-data.sobra;
-  data.faltas=base.filter(r=>num(r[cF])>0).sort((a,b)=>num(b[cF])-num(a[cF])).slice(0,10).map(r=>[r[cProd],r[cDesc],r[cSec],num(r[cF])]);
-  data.sobras=base.filter(r=>num(r[cS])>0).sort((a,b)=>num(b[cS])-num(a[cS])).slice(0,10).map(r=>[r[cProd],r[cDesc],r[cSec],num(r[cS])]);
-  data.setores=[];
-  // Setores vêm do PAINEL; coleta as linhas da área de ranking.
-  for(let r=6;r<14;r++){const n=get(r,0),v=get(r,3);if(n!=null&&v!=null)data.setores.push([String(n),num(v)])}
-  data.setores.sort((a,b)=>b[1]-a[1]).splice(5);
-  return data;
-}
+function aggregate(base){const m=new Map();for(const r of base){const k=norm(r.produto);if(!m.has(k))m.set(k,{produto:r.produto,descricao:r.descricao,secao:r.secao,falta:0,sobra:0});const x=m.get(k);x.falta+=r.falta;x.sobra+=r.sobra}return [...m.values()]}
+// Fórmula original da planilha: ((valor monetário do indicador operacional + falta + sobra) * 100) / faturamento.
+function calc(fat,ind,base){const falta=base.reduce((s,r)=>s+r.falta,0),sobra=base.reduce((s,r)=>s+r.sobra,0),geral=falta+sobra;const valorIndicadorOperacional=Number(fat||0)*Number(ind||0);const resultadoMonetario=valorIndicadorOperacional+geral;const res=fat?(resultadoMonetario/fat):0;return{falta,sobra,geral,valorIndicadorOperacional,resultadoMonetario,res}}
 function render(d){
   const desvio=d.resAtual-d.meta, vr=d.resAtual-d.resAnt;
   const vi=d.indAtual-d.indAnt;
@@ -156,34 +283,13 @@ function render(d){
   <div class="section-title">TOP 10 FALTAS × TOP 10 SOBRAS</div>
   <div class="rank-wrap"><div class="rank f"><h3>TOP 10 FALTAS</h3>${list(d.faltas,'f')}</div><div class="rank s"><h3>TOP 10 SOBRAS</h3>${list(d.sobras,'s')}</div></div>`;
 }
-async function load(file){
-  $('status').textContent='Lendo planilha…';
-  try{
-    let wb;
-    if(file.name.toLowerCase().endsWith('.ods')){
-      const ab=await file.arrayBuffer(); wb=XLSX.read(ab,{type:'array'});
-    }else{
-      const ab=await file.arrayBuffer(); wb=XLSX.read(ab,{type:'array'});
-    }
-    const d=parseWorkbook(wb); currentReport=d; render(d); $('status').textContent='Relatório carregado. Pronto para exportar.';
-  }catch(e){console.error(e);$('status').textContent='Erro: '+e.message}
-}
-$('file').addEventListener('change',e=>{if(e.target.files[0])load(e.target.files[0])});
 
-function openEmailModal(){
-  if(!currentReport || !currentReport.filial || currentReport.filial==='—'){
-    $('status').textContent='Carregue uma planilha antes de enviar o relatório por e-mail.';
-    return;
-  }
-  const d=currentReport;
-  $('emailSubject').value=`Relatório de Auditoria de Perdas — Filial ${d.filial} — Ciclo ${d.cicloAtual}`;
-  $('emailMessage').value=`Bom dia!\n\nSegue relatório de auditoria de perdas da filial ${d.filial}, referente ao ${d.cicloAtual}, contendo os principais resultados da auditoria e a comparação com o ciclo anterior.\n\nGestor(a): ${d.gestor || '—'}\nFalta: ${brl(d.falta)}\nSobra: ${brl(d.sobra)}\nResultado Geral: ${brl(d.geral)}\nIndicador Operacional: ${pct(d.indAtual)}\nResultado Final: ${pct(d.resAtual)}\n\nNo relatório em anexo, constam também os principais produtos relacionados às faltas e sobras identificadas durante a auditoria.\n\nAtenciosamente,\n${d.auditor || 'Auditoria de Prevenção e Perdas'}\nAuditor de Prevenção e Perdas`;
-  $('emailStatus').textContent='';$('emailStatus').className='email-status';
-  $('emailModal').classList.add('open');$('emailModal').setAttribute('aria-hidden','false');
-  setTimeout(()=>$('emailTo').focus(),50);
-}
-function closeEmailModal(){ $('emailModal').classList.remove('open');$('emailModal').setAttribute('aria-hidden','true'); }
-function validEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)}
+function parseIdentificacao(){const filial=$('filial').value.trim()||'—';const gestorRaw=$('gestor').value.trim();const auditorRaw=$('auditor').value.trim();const parsePessoa=v=>{const m=v.match(/^\s*(.*?)\s*-\s*(.+?)\s*$/);return m?{matricula:m[1].trim(),nome:m[2].trim()}:{matricula:'',nome:v||'—'};};const g=parsePessoa(gestorRaw),a=parsePessoa(auditorRaw);return {filial,gestor:g.nome,matriculaGestor:g.matricula,auditor:a.nome,matriculaAuditor:a.matricula};}
+function syncReport(){const a=calc(num($('fatAtual').value),pctInput($('indAtual').value),baseAtual),p=calc(num($('fatAnt').value),pctInput($('indAnt').value),baseAnterior);const resultadoAnteriorInformado=pctInput($('resAntInput').value);const ident=parseIdentificacao();currentReport={...ident,data:new Date().toLocaleDateString('pt-BR'),cicloAtual:$('cicloAtual').value.trim()||'—',cicloAnt:$('cicloAnt').value.trim()||'—',fatAtual:num($('fatAtual').value),fatAnt:num($('fatAnt').value),indAtual:pctInput($('indAtual').value),indAnt:pctInput($('indAnt').value),resAtual:a.res,resAnt:resultadoAnteriorInformado,meta:pctInput($('meta').value||'0,60%'),falta:a.falta,sobra:a.sobra,geral:a.geral,setores:[],faltas:[],sobras:[]};const ag=aggregate(baseAtual);currentReport.faltas=ag.filter(x=>x.falta>0).sort((a,b)=>b.falta-a.falta).slice(0,10).map(x=>[x.produto,x.descricao,x.secao,x.falta]);currentReport.sobras=ag.filter(x=>x.sobra>0).sort((a,b)=>b.sobra-a.sobra).slice(0,10).map(x=>[x.produto,x.descricao,x.secao,x.sobra]);const sec=new Map();for(const r of baseAtual)sec.set(r.secao,(sec.get(r.secao)||0)+r.falta+r.sobra);currentReport.setores=[...sec.entries()].filter(x=>x[0]).sort((a,b)=>b[1]-a[1]).slice(0,5);render(currentReport);renderAnalysis();renderBaseTable('currentTable',baseAtual,'current');renderBaseTable('previousTable',baseAnterior,'previous');$('currentBaseTitle').textContent=`${baseAtual.length} registros — ${currentReport.cicloAtual}`;$('previousBaseTitle').textContent=`${baseAnterior.length} registros — ${currentReport.cicloAnt}`;$('status').textContent='Painel atualizado. Dados processados localmente.'}
+function renderAnalysis(){const cur=aggregate(baseAtual).filter(x=>x.falta>50||x.sobra>50),pm=new Map(aggregate(baseAnterior).map(x=>[norm(x.produto),x])),g={new:[],rec:[],inv:[]};for(const x of cur){const p=pm.get(norm(x.produto)),ct=x.falta>0?'FALTA':'SOBRA';if(!p||(!p.falta&&!p.sobra))g.new.push({...x,ct,pt:'—',pv:0});else{const pt=p.falta>0?'FALTA':'SOBRA',pv=pt==='FALTA'?p.falta:p.sobra;if(pt===ct)g.rec.push({...x,ct,pt,pv});else g.inv.push({...x,ct,pt,pv})}}const block=(arr,k)=>`<div class="analysis-card"><div class="analysis-head ${k}">${k==='new'?'🟢 NOVOS':k==='rec'?'🔴 REINCIDENTES':'🟠 INVERTIDOS'} <span class="count">${arr.length}</span></div>${arr.length?`<table class="data-table"><thead><tr><th>Código</th><th>Produto</th><th>Ciclo anterior</th><th>Ciclo atual</th><th>Classificação</th></tr></thead><tbody>${arr.sort((a,b)=>Math.max(b.falta,b.sobra)-Math.max(a.falta,a.sobra)).map(x=>`<tr><td>${esc(x.produto)}</td><td>${esc(x.descricao)}</td><td>${x.pt==='—'?'—':x.pt+' — '+brl(x.pv)}</td><td class="${x.ct==='FALTA'?'falta':'sobra'}">${x.ct} — ${brl(x.ct==='FALTA'?x.falta:x.sobra)}</td><td><span class="badge ${k}">${k==='new'?'NOVO':k==='rec'?'REINCIDENTE':'INVERTEU'}</span></td></tr>`).join('')}</tbody></table>`:'<div class="empty">Nenhum item nesta categoria.</div>'}</div>`;$('analysis').innerHTML=block(g.new,'new')+block(g.rec,'rec')+block(g.inv,'inv')}
+function renderBaseTable(target,base,kind){let sortKey='valor',dir=-1;const rows=base.slice();$(target).innerHTML=`<div class="table-tools"><button class="secondary" id="${target}Clear">🧹 Limpar todos os filtros</button></div><div class="hint">${rows.length} registros — cada cabeçalho possui filtro próprio; clique no título para ordenar.</div><div style="max-height:680px;overflow:auto;margin-top:10px"><table class="data-table"><thead><tr><th data-sort="produto">Código<br><input data-f="produto" placeholder="Filtrar..."></th><th data-sort="descricao">Descrição<br><input data-f="descricao" placeholder="Filtrar..."></th><th data-sort="secao">Seção<br><input data-f="secao" placeholder="Filtrar..."></th><th data-sort="qtd">Divergência<br><input data-f="qtd" placeholder="Ex.: -2"></th><th data-sort="falta">Falta<br><input data-f="falta" placeholder="> 50"></th><th data-sort="sobra">Sobra<br><input data-f="sobra" placeholder="> 50"></th></tr></thead><tbody id="${target}Body"></tbody></table></div>`;const filters={};$(target).querySelectorAll('[data-f]').forEach(el=>{filters[el.dataset.f]=el.value;el.addEventListener('input',()=>{filters[el.dataset.f]=el.value;draw()});el.addEventListener('change',()=>{filters[el.dataset.f]=el.value;draw()})});const draw=()=>{let a=rows.filter(x=>{const q=k=>norm(filters[k]||'');if(q('produto')&&!norm(x.produto).includes(q('produto')))return false;if(q('descricao')&&!norm(x.descricao).includes(q('descricao')))return false;if(q('secao')&&!norm(x.secao).includes(q('secao')))return false;if(q('qtd')){const wanted=num(filters.qtd);if(Number(x.qtd)!==wanted)return false}const testMoney=(raw,val)=>{raw=String(raw||'').trim();if(!raw)return true;let op='=',txt=raw;if(/^>=/.test(raw)){op='>=';txt=raw.slice(2)}else if(/^<=/.test(raw)){op='<=';txt=raw.slice(2)}else if(/^>/.test(raw)){op='>';txt=raw.slice(1)}else if(/^</.test(raw)){op='<';txt=raw.slice(1)}const wanted=num(txt);return op==='>'?val>wanted:op==='>='?val>=wanted:op==='<'?val<wanted:op==='<='?val<=wanted:val===wanted};if(!testMoney(filters.falta,x.falta)||!testMoney(filters.sobra,x.sobra))return false;return true});a.sort((x,y)=>{const val=z=>sortKey==='falta'?z.falta:sortKey==='sobra'?z.sobra:sortKey==='qtd'?Math.abs(z.qtd):norm(z[sortKey]);const A=val(x),B=val(y);return A<B?-dir:A>B?dir:0});$(target+'Body').innerHTML=a.length?a.map(x=>{return`<tr><td>${esc(x.produto)}</td><td>${esc(x.descricao)}</td><td>${esc(x.secao)}</td><td>${x.qtd||'—'}</td><td class="money falta">${x.falta>0?brl(x.falta):'—'}</td><td class="money sobra">${x.sobra>0?brl(x.sobra):'—'}</td></tr>`}).join(''):'<tr><td colspan="6" class="empty">Nenhum registro encontrado.</td></tr>'};$(target+'Clear').addEventListener('click',()=>{$(target).querySelectorAll('[data-f]').forEach(el=>{el.value='';filters[el.dataset.f]=''});sortKey='falta';dir=-1;draw()});$(target).querySelectorAll('th[data-sort]').forEach(th=>th.addEventListener('click',e=>{if(e.target.matches('input,select'))return;const k=th.dataset.sort;if(sortKey===k)dir*=-1;else{sortKey=k;dir=1}draw()}));draw()}
+function processPaste(textareaId,target,statusId){try{$(statusId).textContent='Processando…';const data=readProcfitText($(textareaId).value);if(target==='current')baseAtual=data;else baseAnterior=data;$(statusId).textContent=`${data.length} divergências processadas.`;$(statusId).style.color='var(--green)';return true}catch(e){$(statusId).textContent='Erro: '+e.message;$(statusId).style.color='var(--red)';return false}}
+function nav(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(p).classList.add('active');document.querySelectorAll('.nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));window.scrollTo({top:0,behavior:'smooth'})}document.querySelectorAll('.nav button[data-page]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.page)));document.querySelectorAll('#fatAtual,#fatAnt').forEach(el=>el.addEventListener('paste',()=>setTimeout(()=>{const v=num(el.value);if(v)el.value=brl(v)},80)));$('processBases').addEventListener('click',()=>{processPaste('baseAtualPaste','current','baseAtualStatus');processPaste('baseAntPaste','previous','baseAntStatus')});$('baseAtualPaste').addEventListener('paste',()=>setTimeout(()=>processPaste('baseAtualPaste','current','baseAtualStatus'),80));$('baseAntPaste').addEventListener('paste',()=>setTimeout(()=>processPaste('baseAntPaste','previous','baseAntStatus'),80));$('generate').addEventListener('click',()=>{const okA=baseAtual.length||processPaste('baseAtualPaste','current','baseAtualStatus');const okP=baseAnterior.length||processPaste('baseAntPaste','previous','baseAntStatus');if(!okA||!okP){$('status').textContent='Cole e processe as duas bases Procfit antes de gerar o painel.';return}syncReport();nav('p2')});
 const GOOGLE_CLIENT_ID='451187861977-m98170m0l707t4nhv1k280h375qeq2f9.apps.googleusercontent.com';
 const GMAIL_SCOPE='https://www.googleapis.com/auth/gmail.send';
 let gmailTokenClient=null;
@@ -303,6 +409,33 @@ async function sendEmailReport(){
   }finally{btn.disabled=false;btn.textContent='📧 Enviar relatório';}
 }
 
+function exportCurrentDivergenciasXlsx(){
+  if(!baseAtual || !baseAtual.length){ $('status').textContent='Cole e processe a base do ciclo atual antes de exportar.'; return; }
+  const rows=baseAtual.map(x=>({
+    'Código':x.produto,
+    'Descrição':x.descricao,
+    'Seção':x.secao,
+    'Estoque Saldo':x.estoqueSaldo,
+    'Contagem':x.contagem,
+    'Divergência':x.qtd,
+    'Falta':x.falta,
+    'Sobra':x.sobra
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:16},{wch:48},{wch:28},{wch:14},{wch:12},{wch:14},{wch:16},{wch:16}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Divergencias Atual');
+  const ciclo=(currentReport?.cicloAtual||$('cicloAtual')?.value||'atual').toString().replace(/[^a-z0-9_-]/gi,'_');
+  XLSX.writeFile(wb,`Divergencias_Ciclo_${ciclo}.xlsx`);
+  $('status').textContent='Divergências do ciclo atual exportadas para Excel/LibreOffice.';
+}
+function exportPainelPdf(){
+  if(!currentReport){ $('status').textContent='Gere o painel antes de exportar o PDF.'; nav('p1'); return; }
+  const oldTitle=document.title;
+  document.title=`Relatorio_Auditoria_Perdas_Filial_${String(currentReport.filial||'').replace(/[^a-z0-9_-]/gi,'_')}`;
+  // Print CSS shows all five pages and expands the long divergence tables.
+  setTimeout(()=>{window.print();setTimeout(()=>{document.title=oldTitle},1000)},50);
+}
 function renderBlank(){
   render({
     filial:'—',gestor:'—',matriculaGestor:'',auditor:'—',data:'—',cicloAnt:'—',cicloAtual:'—',
@@ -314,54 +447,8 @@ function renderBlank(){
 }
 
 $('reset').addEventListener('click',()=>{currentReport=null;renderBlank()});
-async function gerarJpeg(){
-  const node=$('report');
-  const canvas=await html2canvas(node,{scale:1.5,useCORS:true,backgroundColor:'#fff',width:1080,height:1920});
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.96));
-  if(!blob) throw new Error('O navegador não conseguiu criar a imagem.');
-  return {blob,canvas};
-}
-$('export').addEventListener('click',async()=>{
-  $('status').textContent='Gerando JPEG…';
-  try{
-    const {blob}=await gerarJpeg();
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a'); a.href=url; a.download='relatorio_executivo_nissei.jpg'; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),3000);
-    $('status').textContent='JPEG gerado. No iPhone, use “Compartilhar JPEG” para salvar/mandar pelo WhatsApp.';
-  }catch(e){console.error(e);$('status').textContent='Não foi possível gerar o JPEG: '+e.message}
-});
-$('share').addEventListener('click',async()=>{
-  $('status').textContent='Gerando imagem para compartilhar…';
-  try{
-    const {blob}=await gerarJpeg();
-    const file=new File([blob],'relatorio_executivo_nissei.jpg',{type:'image/jpeg'});
-    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:'Relatório de Auditoria de Perdas',text:'Relatório de Auditoria de Perdas — Nissei'});
-      $('status').textContent='Imagem enviada para o menu de compartilhamento.';
-      return;
-    }
-    // Fallback especialmente útil no iPhone: abre a imagem em uma aba própria.
-    const url=URL.createObjectURL(blob);
-    const win=window.open(url,'_blank');
-    if(!win){
-      $('status').textContent='O navegador bloqueou a nova aba. Toque novamente e permita pop-ups.';
-    }else{
-      $('status').textContent='Imagem aberta em nova aba. No iPhone, toque e segure a imagem e escolha “Salvar em Fotos”.';
-      setTimeout(()=>URL.revokeObjectURL(url),60000);
-    }
-  }catch(e){
-    if(e.name==='AbortError'){ $('status').textContent='Compartilhamento cancelado.'; return; }
-    console.error(e); $('status').textContent='Não foi possível compartilhar: '+e.message;
-  }
-});
-$('emailBtn').addEventListener('click',openEmailModal);
-$('closeEmail').addEventListener('click',closeEmailModal);
-$('cancelEmail').addEventListener('click',closeEmailModal);
-$('sendEmail').addEventListener('click',sendEmailReport);
-$('emailModal').addEventListener('click',e=>{if(e.target.id==='emailModal')closeEmailModal()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEmailModal()});
-renderBlank();
-</script>
-</body>
-</html>
+
+$('exportCurrentXlsx').addEventListener('click',exportCurrentDivergenciasXlsx);$('exportPdf').addEventListener('click',exportPainelPdf);$('emailBtn').addEventListener('click',openEmailModal);$('closeEmail').addEventListener('click',closeEmailModal);$('cancelEmail').addEventListener('click',closeEmailModal);$('sendEmail').addEventListener('click',sendEmailReport);$('emailModal').addEventListener('click',e=>{if(e.target.id==='emailModal')closeEmailModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEmailModal()});
+$('reset').addEventListener('click',()=>{baseAtual=[];baseAnterior=[];['filial','gestor','auditor','cicloAtual','cicloAnt','fatAtual','indAtual','fatAnt','indAnt','resAntInput'].forEach(id=>$(id).value='');$('meta').value='0,60%';$('baseAtualStatus').textContent='';$('baseAntStatus').textContent='';$('baseAtualPaste').value='';$('baseAntPaste').value='';nav('p1');$('status').textContent='Preencha os dados e importe as duas bases Procfit.';render({filial:'—',gestor:'—',matriculaGestor:'',auditor:'—',cicloAtual:'—',cicloAnt:'—',fatAtual:0,fatAnt:0,indAtual:0,indAnt:0,resAtual:0,resAnt:0,meta:.006,falta:0,sobra:0,geral:0,setores:[],faltas:[],sobras:[]});renderAnalysis();renderBaseTable('currentTable',[],'current');renderBaseTable('previousTable',[],'previous')});
+render({filial:'—',gestor:'—',matriculaGestor:'',auditor:'—',cicloAtual:'—',cicloAnt:'—',fatAtual:0,fatAnt:0,indAtual:0,indAnt:0,resAtual:0,resAnt:0,meta:.006,falta:0,sobra:0,geral:0,setores:[],faltas:[],sobras:[]});renderAnalysis();renderBaseTable('currentTable',[],'current');renderBaseTable('previousTable',[],'previous');
+</script></body></html>
