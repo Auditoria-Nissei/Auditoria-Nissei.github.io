@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório de Auditoria de Perdas — Nissei</title><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script><script src="https://accounts.google.com/gsi/client" async defer></script><style>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script><script src="https://accounts.google.com/gsi/client"></script><style>
 :root{--navy:#063B66;--blue:#0A5CA8;--yellow:#F5C400;--text:#17324D;--muted:#60758A;--red:#C62828;--green:#14804A;--line:#D9E4EC}
 *{box-sizing:border-box}body{margin:0;background:#eef2f5;color:var(--text);font-family:Arial,Helvetica,sans-serif}
 .app{max-width:1180px;margin:24px auto;padding:0 18px}.toolbar{background:#fff;border:1px solid #dbe4eb;border-radius:16px;padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;box-shadow:0 5px 20px #0000000d}
@@ -205,7 +205,7 @@ button,.file{border:0;border-radius:10px;padding:12px 16px;font-weight:700;curso
   </div>
 </section><section class="page" id="p2"><div id="report" class="report"></div></section><section class="page" id="p3"><div class="page-wrap"><h2>Análise das divergências</h2><div class="sub">Itens com valor no ciclo atual acima de R$ 50,00, classificados pela comparação com o ciclo anterior.</div><div id="analysis"></div></div></section>
 <section class="page" id="p4"><div class="page-wrap"><h2>Divergências — ciclo atual</h2><div class="sub" id="currentBaseTitle"></div><div id="currentTable"></div></div></section><section class="page" id="p5"><div class="page-wrap"><h2>Divergências — ciclo anterior</h2><div class="sub" id="previousBaseTitle"></div><div id="previousTable"></div></div></section></div>
-<div id="emailModal" class="email-modal" aria-hidden="true"><div class="email-box" role="dialog" aria-modal="true" aria-labelledby="emailTitle"><div class="email-head"><div><h2 id="emailTitle">Enviar relatório por e-mail</h2><p>O JPEG será gerado automaticamente e enviado pelo seu Gmail corporativo.</p></div><button type="button" class="close-email" id="closeEmail">×</button></div><label>Destinatário(s)<input id="emailTo" type="text" placeholder="exemplo@empresa.com.br, outro@empresa.com.br"></label><label>Assunto<input id="emailSubject" type="text"></label><label>Mensagem<textarea id="emailMessage" rows="5"></textarea></label><div class="email-note">🔒 As bases não são enviadas. Apenas o relatório JPEG é anexado.</div><div class="email-actions"><button type="button" class="secondary" id="cancelEmail">Cancelar</button><button type="button" class="primary" id="sendEmail">📧 Enviar relatório</button></div><div class="email-status" id="emailStatus"></div></div></div>
+<div id="emailModal" class="email-modal" aria-hidden="true"><div class="email-box" role="dialog" aria-modal="true" aria-labelledby="emailTitle"><div class="email-head"><div><h2 id="emailTitle">Enviar relatório por e-mail</h2><p>O JPEG será gerado automaticamente e enviado pelo seu Gmail corporativo.</p></div><button type="button" class="close-email" id="closeEmail">×</button></div><label>Destinatário(s)<input id="emailTo" type="text" placeholder="exemplo@empresa.com.br, outro@empresa.com.br"></label><label>Assunto<input id="emailSubject" type="text"></label><label>Mensagem<textarea id="emailMessage" rows="5"></textarea></label><div class="email-note">🔒 As bases não são enviadas. Apenas o relatório JPEG é anexado.</div><div class="email-status" id="emailStatusTop">Clique em “Enviar relatório” para autorizar o Gmail e enviar o JPEG.</div><div class="email-actions"><button type="button" class="secondary" id="cancelEmail">Cancelar</button><button type="button" class="primary" id="sendEmail">📧 Enviar relatório</button></div><div class="email-status" id="emailStatus" style="display:none"></div></div></div>
 <script>
 const $=id=>document.getElementById(id);const brl=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);const pct=v=>(Number(v)*100).toFixed(2).replace('.',',')+'%';const pp=v=>((Number(v)*100>=0?'+':'')+(Number(v)*100).toFixed(2).replace('.',',')+'%');const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));function norm(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase()}function num(v){if(typeof v==='number')return v;let raw=String(v??'').trim();if(!raw)return 0;const money=raw.match(/R\$\s*[-+]?\d[\d.]*(?:,\d+)?/i);if(money)raw=money[0];let s=raw.replace(/R\$|\s/gi,'').replace(/[^0-9,.-]/g,'');if(!s)return 0;if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else if(s.includes(','))s=s.replace(',','.');else if(/^[-+]?\d{1,3}(?:\.\d{3})+$/.test(s))s=s.replace(/\./g,'');return Number(s)||0}function pctInput(v){let s=String(v??'').trim().replace(/%/g,'').replace(/\s/g,'');if(!s)return 0;if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(',','.');let n=Number(s)||0;return n/100;}function col(headers,names){for(const n of names){const i=headers.findIndex(h=>norm(h)===norm(n));if(i>=0)return i}return -1}function findHeaderRow(rows){for(let i=0;i<Math.min(20,rows.length);i++){const h=rows[i].map(x=>norm(x));if(h.some(x=>['produto','codigo produto','cod produto'].includes(x))&&h.some(x=>x.includes('descricao'))&&(h.some(x=>x.includes('total falta'))||h.some(x=>x.includes('diverg'))))return i}return 0}
 let currentReport=null,baseAtual=[],baseAnterior=[];
@@ -298,29 +298,22 @@ const GMAIL_SCOPE='https://www.googleapis.com/auth/gmail.send';
 let gmailTokenClient=null;
 let gmailAccessToken=null;
 let gmailTokenPromise=null;
-
-function waitForGoogleIdentity(){
-  return new Promise((resolve,reject)=>{
-    const deadline=Date.now()+10000;
-    const check=()=>{
-      if(window.google?.accounts?.oauth2){resolve();return;}
-      if(Date.now()>deadline){reject(new Error('O serviço de autenticação do Google não carregou. Recarregue a página e tente novamente.'));return;}
-      setTimeout(check,100);
-    };
-    check();
-  });
-}
+let gmailTokenPromiseResolve=null;
+let gmailTokenPromiseReject=null;
 
 function initGmailTokenClient(){
-  if(gmailTokenClient || !window.google?.accounts?.oauth2) return !!gmailTokenClient;
+  if(gmailTokenClient) return true;
+  if(!window.google?.accounts?.oauth2) return false;
   gmailTokenClient=google.accounts.oauth2.initTokenClient({
     client_id:GOOGLE_CLIENT_ID,
     scope:GMAIL_SCOPE,
     callback:(response)=>{
-      const resolve=gmailTokenPromiseResolve;
-      const reject=gmailTokenPromiseReject;
+      const resolve=gmailTokenPromiseResolve, reject=gmailTokenPromiseReject;
       gmailTokenPromise=null; gmailTokenPromiseResolve=null; gmailTokenPromiseReject=null;
-      if(response?.error){reject?.(new Error(response.error_description||response.error||'O Google não autorizou o envio.'));return;}
+      if(response?.error){
+        const msg=response.error_description||response.error||'O Google não autorizou o envio.';
+        reject?.(new Error(msg)); return;
+      }
       gmailAccessToken=response.access_token;
       resolve?.(gmailAccessToken);
     },
@@ -332,28 +325,17 @@ function initGmailTokenClient(){
   });
   return true;
 }
-let gmailTokenPromiseResolve=null;
-let gmailTokenPromiseReject=null;
+initGmailTokenClient();
 
-(function preloadGmailOAuth(){
-  const tryInit=()=>{ if(!initGmailTokenClient()) setTimeout(tryInit,100); };
-  tryInit();
-})();
-
-async function getGmailAccessToken(){
-  // Important: initialize the OAuth client as soon as Google Identity Services is available.
-  // This keeps requestAccessToken() inside the button click path, avoiding popup blockers.
-  if(!gmailTokenClient){
-    const deadline=Date.now()+10000;
-    while(!window.google?.accounts?.oauth2 && Date.now()<deadline) await new Promise(r=>setTimeout(r,50));
-    if(!initGmailTokenClient()) throw new Error('O serviço de autenticação do Google não carregou. Recarregue a página e tente novamente.');
-  }
-  if(gmailAccessToken) return gmailAccessToken;
+function getGmailAccessToken(forceConsent=false){
+  if(!initGmailTokenClient()) return Promise.reject(new Error('O serviço de autenticação do Google não carregou. Recarregue a página e tente novamente.'));
+  if(gmailAccessToken && !forceConsent) return Promise.resolve(gmailAccessToken);
   if(gmailTokenPromise) return gmailTokenPromise;
   gmailTokenPromise=new Promise((resolve,reject)=>{
     gmailTokenPromiseResolve=resolve; gmailTokenPromiseReject=reject;
-    // No await between the click handler and this call when the client was pre-initialized.
-    gmailTokenClient.requestAccessToken({prompt:''});
+    // This function is called from the Send button click path. Using an explicit
+    // consent on first authorization makes the Google account chooser/consent visible.
+    gmailTokenClient.requestAccessToken({prompt:forceConsent?'consent':''});
   });
   return gmailTokenPromise;
 }
@@ -402,12 +384,12 @@ function buildRawEmail({to,subject,message,filename,attachmentBase64}){
 async function sendEmailReport(){
   const rawTo=$('emailTo').value.trim();
   const to=rawTo.split(/[;,\s]+/).map(x=>x.trim()).filter(Boolean);
-  if(!to.length || to.some(x=>!validEmail(x))){$('emailStatus').textContent='Informe um ou mais e-mails válidos.';$('emailStatus').className='email-status err';return;}
-  if(!currentReport){$('emailStatus').textContent='Gere o painel antes de enviar.';$('emailStatus').className='email-status err';return;}
-  const btn=$('sendEmail');btn.disabled=true;btn.textContent='Autorizando…';$('emailStatus').textContent='Abrindo a autorização do Google…';$('emailStatus').className='email-status';
+  if(!to.length || to.some(x=>!validEmail(x))){$('emailStatusTop').textContent='Informe um ou mais e-mails válidos.';$('emailStatusTop').className='email-status err';return;}
+  if(!currentReport){$('emailStatusTop').textContent='Gere o painel antes de enviar.';$('emailStatusTop').className='email-status err';return;}
+  const btn=$('sendEmail');btn.disabled=true;btn.textContent='Autorizando…';$('emailStatusTop').textContent='Abrindo a autorização do Google…';$('emailStatusTop').className='email-status';
   try{
-    let token=await getGmailAccessToken();
-    $('emailStatus').textContent='Gerando JPEG e preparando o e-mail…';
+    let token=await getGmailAccessToken(!gmailAccessToken);
+    $('emailStatusTop').textContent='Gerando JPEG e preparando o e-mail…';
     const {blob}=await gerarJpeg();
     if(blob.size>20*1024*1024) throw new Error('O JPEG ficou grande demais para o Gmail.');
     const attachment=await blobToBase64(blob);
@@ -418,14 +400,14 @@ async function sendEmailReport(){
     const doSend=async()=>fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{
       method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({raw})
     });
-    $('emailStatus').textContent='Enviando pelo Gmail…';
+    $('emailStatusTop').textContent='Enviando pelo Gmail…';
     let res=await doSend();
     let out=await res.json().catch(()=>({}));
     // Token may have expired; get a fresh one and retry once.
     if(res.status===401){
       gmailAccessToken=null;
-      $('emailStatus').textContent='Sessão do Google expirada. Renovando autorização…';
-      token=await getGmailAccessToken();
+      $('emailStatusTop').textContent='Sessão do Google expirada. Renovando autorização…';
+      token=await getGmailAccessToken(true);
       res=await doSend();
       out=await res.json().catch(()=>({}));
     }
@@ -435,12 +417,12 @@ async function sendEmailReport(){
       const suffix=reason?` (${reason})`:'';
       throw new Error(detail+suffix);
     }
-    $('emailStatus').textContent='Relatório enviado com sucesso pelo Gmail.';$('emailStatus').className='email-status ok';
+    $('emailStatusTop').textContent='Relatório enviado com sucesso pelo Gmail.';$('emailStatusTop').className='email-status ok';
     $('status').textContent='Relatório enviado pelo Gmail com o JPEG anexado.';
     setTimeout(closeEmailModal,1400);
   }catch(e){
     console.error('Falha no envio Gmail:',e);
-    $('emailStatus').textContent=e?.message||'Não foi possível enviar o relatório.';$('emailStatus').className='email-status err';
+    $('emailStatusTop').textContent=e?.message||'Não foi possível enviar o relatório.';$('emailStatusTop').className='email-status err';
   }finally{btn.disabled=false;btn.textContent='📧 Enviar relatório';}
 }
 
@@ -500,7 +482,7 @@ function defaultEmailContent(){
 function openEmailModal(){
   if(!currentReport){$('status').textContent='Gere o painel antes de enviar por e-mail.';nav('p1');return;}
   const c=defaultEmailContent();
-  $('emailSubject').value=c.subject;$('emailMessage').value=c.message;$('emailStatus').textContent='';$('emailStatus').className='email-status';
+  $('emailSubject').value=c.subject;$('emailMessage').value=c.message;$('emailStatusTop').textContent='';$('emailStatusTop').className='email-status';
   $('emailModal').classList.add('open');$('emailModal').setAttribute('aria-hidden','false');setTimeout(()=>$('emailTo').focus(),50);
 }
 function closeEmailModal(){
@@ -593,7 +575,7 @@ function renderBlank(){
 
 $('reset').addEventListener('click',()=>{currentReport=null;renderBlank()});
 
-$('export').addEventListener('click',exportJpeg);$('share').addEventListener('click',shareJpeg);$('exportCurrentXlsx').addEventListener('click',exportCurrentDivergenciasXlsx);$('exportPdf').addEventListener('click',exportPainelPdf);$('emailBtn').addEventListener('click',openEmailModal);$('closeEmail').addEventListener('click',closeEmailModal);$('cancelEmail').addEventListener('click',closeEmailModal);$('sendEmail').addEventListener('click',sendEmailReport);$('emailModal').addEventListener('click',e=>{if(e.target.id==='emailModal')closeEmailModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEmailModal()});
+$('export').addEventListener('click',exportJpeg);$('share').addEventListener('click',shareJpeg);$('exportCurrentXlsx').addEventListener('click',exportCurrentDivergenciasXlsx);$('exportPdf').addEventListener('click',exportPainelPdf);$('emailBtn').addEventListener('click',openEmailModal);$('closeEmail').addEventListener('click',closeEmailModal);$('cancelEmail').addEventListener('click',closeEmailModal);$('sendEmail').addEventListener('click',()=>{ $('emailStatusTop').textContent='Iniciando envio pelo Gmail…'; $('emailStatusTop').className='email-status'; sendEmailReport(); });$('emailModal').addEventListener('click',e=>{if(e.target.id==='emailModal')closeEmailModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEmailModal()});
 $('reset').addEventListener('click',()=>{baseAtual=[];baseAnterior=[];['filial','gestor','auditor','cicloAtual','cicloAnt','fatAtual','indAtual','fatAnt','indAnt','resAntInput'].forEach(id=>$(id).value='');$('meta').value='0,60%';$('baseAtualStatus').textContent='';$('baseAntStatus').textContent='';$('baseAtualPaste').value='';$('baseAntPaste').value='';nav('p1');$('status').textContent='Preencha os dados e importe as duas bases Procfit.';render({filial:'—',gestor:'—',matriculaGestor:'',auditor:'—',cicloAtual:'—',cicloAnt:'—',fatAtual:0,fatAnt:0,indAtual:0,indAnt:0,resAtual:0,resAnt:0,meta:.006,falta:0,sobra:0,geral:0,setores:[],faltas:[],sobras:[]});renderAnalysis();renderBaseTable('currentTable',[],'current');renderBaseTable('previousTable',[],'previous')});
 render({filial:'—',gestor:'—',matriculaGestor:'',auditor:'—',cicloAtual:'—',cicloAnt:'—',fatAtual:0,fatAnt:0,indAtual:0,indAnt:0,resAtual:0,resAnt:0,meta:.006,falta:0,sobra:0,geral:0,setores:[],faltas:[],sobras:[]});renderAnalysis();renderBaseTable('currentTable',[],'current');renderBaseTable('previousTable',[],'previous');
 </script></body></html>
