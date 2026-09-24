@@ -141,7 +141,7 @@ button,.file{border:0;border-radius:10px;padding:12px 16px;font-weight:700;curso
       <div><h2>Identificação</h2><div class="sub">Informações que aparecerão no relatório.</div></div>
     </div>
     <div class="form-grid form-grid-ident">
-      <div class="field field-feature field-wide"><label>FILIAL — NÚMERO E NOME</label><input id="filial" placeholder="Ex.: Filial 000 — Londrina Av Higienópolis"></div>
+      <div class="field field-feature field-wide"><label>FILIAL — NÚMERO E NOME</label><input id="filial" placeholder="Ex.: 973 — CD Colombo"></div>
       <div class="field field-wide"><label>GESTOR — MATRÍCULA - NOME</label><input id="gestor" placeholder="Ex.: 12345 - João da Silva"></div>
       <div class="field field-wide"><label>AUDITOR — MATRÍCULA - NOME</label><input id="auditor" placeholder="Ex.: 12345 - João da Silva"></div>
     </div>
@@ -274,7 +274,7 @@ function render(d){
     <div class="card"><div class="ct">TOTAL DE FALTAS</div><div class="cv red">${brl(d.falta)}</div><div class="cs">Base de dados</div></div>
     <div class="card"><div class="ct">TOTAL DE SOBRAS</div><div class="cv green">${brl(d.sobra)}</div><div class="cs">Base de dados</div></div>
     <div class="card"><div class="ct">RESULTADO GERAL</div><div class="cv navy">${brl(d.geral)}</div><div class="cs">Falta + Sobra</div></div></div>
-  <div class="cards2"><div class="card"><div class="ct">INDICADOR OPERACIONAL</div><div class="cv" style="color:var(--blue)">${pct(d.indAtual)}</div><div class="cs">&nbsp;</div></div><div class="card"><div class="ct">RESULTADO DE PERDA LÍQUIDA</div><div class="cv" style="color:${d.perdaLiquidaAtual<=d.meta?'var(--green)':'var(--red)'}">${pct(d.perdaLiquidaAtual)}</div><div class="cs">Indicador + Falta − Sobra</div></div></div>
+  <div class="cards2"><div class="card"><div class="ct">INDICADOR OPERACIONAL</div><div class="cv" style="color:var(--blue)">${pct(d.indAtual)}</div><div class="cs">Vencidos + Danificados + Ajuste de Estoque</div></div><div class="card"><div class="ct">RESULTADO DE PERDA LÍQUIDA</div><div class="cv" style="color:${d.perdaLiquidaAtual<=d.meta?'var(--green)':'var(--red)'}">${pct(d.perdaLiquidaAtual)}</div><div class="cs">Indicador + Falta − Sobra</div></div></div>
   <div class="section-title">COMPARATIVO — CICLO ATUAL × CICLO ANTERIOR</div>
   <div class="compare"><div class="grid head"><span>INDICADOR</span><span>ANTERIOR</span><span>ATUAL</span><span>VARIAÇÃO</span></div>
     <div class="grid row"><span>Faturamento</span><span>${brl(d.fatAnt)}</span><span>${brl(d.fatAtual)}</span><span style="color:${d.fatAtual >= d.fatAnt ? 'var(--green)' : 'var(--red)'}">${d.fatAnt ? ((d.fatAtual/d.fatAnt-1)*100 >= 0 ? '+' : '') + ((d.fatAtual/d.fatAnt-1)*100).toFixed(1).replace('.',',') + '%' : '—'}</span></div>
